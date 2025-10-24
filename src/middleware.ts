@@ -33,6 +33,12 @@ function isPublicPath(pathname: string): boolean {
 
   // Allow unauthenticated access to auth endpoints
   if (pathname.startsWith("/api/auth/")) return true;
+  
+  // Allow public API endpoints
+  if (pathname === "/api/network-info") return true;
+  if (pathname === "/api/social/get") return true;
+  if (pathname === "/api/social/get-handle") return true;
+  if (pathname === "/api/social/find-wallet") return true;
 
   return false;
 }
@@ -53,8 +59,9 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    // Redirect to home page with auth required message
     const url = req.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/";
     url.searchParams.set("auth", "required");
     return NextResponse.redirect(url);
   }
@@ -84,8 +91,9 @@ export async function middleware(req: NextRequest) {
         { status: 401 },
       );
     }
+    // Redirect to home page with expired message
     const url = req.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/";
     url.searchParams.set("auth", "expired");
     return NextResponse.redirect(url);
   }

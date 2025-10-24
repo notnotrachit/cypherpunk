@@ -6,10 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "anchor-build": "anchor build",
+    "anchor-test": "anchor test",
+    "anchor-deploy": "anchor deploy",
+    "export-wallet": "node scripts/export-wallet-key.js",
+    "init-program": "node scripts/initialize-program.js"
   },
   "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/spl-token": "^0.4.0",
+    "@solana/web3.js": "^1.95.0",
     "bs58": "^5.0.0",
+    "dotenv": "^17.2.3",
     "jose": "^5.10.0",
     "next": "16.0.0",
     "react": "19.2.0",
@@ -18,13 +27,18 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "chai": "^4.3.10",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
+    "mocha": "^10.2.0",
     "tailwindcss": "^4",
+    "ts-mocha": "^10.0.0",
     "typescript": "^5"
   }
 }

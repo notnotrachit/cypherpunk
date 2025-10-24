@@ -1,81 +1,72 @@
-import Navbar from "../../components/Navbar";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { verifySessionJwt } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
+import SocialLinkingForm from "@/components/SocialLinkingForm";
+import SocialLookup from "@/components/SocialLookup";
+import NetworkBadge from "@/components/NetworkBadge";
 
-function shortAddress(addr: string | null, chars = 4) {
-  if (!addr) return "";
-  if (addr.length <= chars * 2 + 3) return addr;
-  return `${addr.slice(0, chars)}…${addr.slice(-chars)}`;
-}
+export const dynamic = "force-dynamic";
 
-export default async function Dashboard() {
-  // Read auth context injected by middleware
-  const hdrs = await headers();
-  const address = (hdrs.get("x-wallet-address") || null) as string | null;
+export default async function DashboardPage() {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get("session")?.value;
+
+  if (!sessionToken) {
+    redirect("/");
+  }
+
+  let walletAddress: string;
+  try {
+    const { payload } = await verifySessionJwt(sessionToken);
+    walletAddress = payload.sub;
+  } catch {
+    redirect("/");
+  }
 
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.08),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.08),transparent)] dark:bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.12),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.12),transparent)]">
-      {/* Top navigation with brand and logout/connect */}
-      <Navbar address={address} />
-
-      {/* Main content */}
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pt-10">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold leading-tight tracking-tight text-zinc-900 dark:text-zinc-100">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {address ? (
-              <>
-                Signed in as{" "}
-                <span className="rounded-md bg-zinc-100 px-2 py-0.5 font-mono text-xs text-zinc-700 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
-                  {shortAddress(address)}
-                </span>
-              </>
-            ) : (
-              "Authenticated session"
-            )}
-          </p>
-        </div>
-
-        {/* Empty state card */}
-        <section
-          className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5"
-          style={{
-            backgroundImage:
-              "radial-gradient(800px 400px at -10% -20%, rgba(139, 92, 246, 0.14), transparent), radial-gradient(800px 400px at 110% -20%, rgba(16, 185, 129, 0.12), transparent)",
-          }}
-        >
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-3 inline-flex items-center justify-center rounded-xl bg-violet-600/10 p-3 ring-1 ring-inset ring-violet-500/20 dark:bg-violet-500/10 dark:ring-violet-400/20">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/phantom.svg"
-                alt=""
-                className="h-7 w-7"
-                aria-hidden="true"
-                draggable={false}
-              />
+      <Navbar />
+      <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+                  Dashboard
+                </h1>
+                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  Connected wallet: <code className="rounded bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-800">{walletAddress}</code>
+                </p>
+              </div>
+              <NetworkBadge />
             </div>
-            <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">
-              Nothing here yet
-            </h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Your dashboard is currently empty. Come back later to see your
-              data and tools.
-            </p>
-          </div>
+          </section>
 
-          {/* Soft glow accents */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -bottom-16 left-1/2 h-40 w-[60%] -translate-x-1/2 rounded-full bg-violet-500/20 blur-3xl dark:bg-violet-400/20"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -top-20 left-1/4 h-32 w-[40%] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-400/20"
-          />
-        </section>
+          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+              Link Your Social Accounts
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Connect your social media accounts to enable direct token transfers via your social handles.
+            </p>
+            <div className="mt-6">
+              <SocialLinkingForm walletAddress={walletAddress} />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
+            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+              Lookup Social Links
+            </h2>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Search for social accounts linked to wallets or find wallets by social handles.
+            </p>
+            <div className="mt-6">
+              <SocialLookup />
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );

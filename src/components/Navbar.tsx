@@ -163,12 +163,13 @@ export default function Navbar({
         onCloseAction={closeConnectModal}
         title="Connect your wallet"
         iconSrc="/phantom.svg"
-        description="Use Phantom to sign a message. We will verify it on the server before granting access."
+        description="Connect your Phantom wallet and sign a message. We’ll verify it on the server to securely sign you in."
         size="sm"
       >
-        <div className="space-y-4">
-          <div className="rounded-lg bg-zinc-100/60 p-3 text-xs text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/40 dark:text-zinc-300 dark:ring-zinc-800">
-            No funds are required. This only proves you own the wallet.
+        <div className="space-y-5">
+          <div className="rounded-xl bg-zinc-100/70 p-4 text-sm text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/50 dark:text-zinc-300 dark:ring-zinc-800">
+            We’ll never request a transaction or funds for sign‑in. This only
+            proves you control the wallet.
           </div>
           <PhantomLogin
             buttonLabel="Continue with Phantom"

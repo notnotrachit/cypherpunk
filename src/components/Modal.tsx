@@ -234,8 +234,8 @@ export default function Modal({
       className={[
         "fixed inset-0 z-50",
         "flex items-center justify-center",
-        "px-4 py-8 sm:px-6",
-        "backdrop-blur-[2px]",
+        "px-4 py-10 sm:px-6",
+        "backdrop-blur-[3px]",
       ].join(" ")}
     >
       {/* Backdrop */}
@@ -253,7 +253,7 @@ export default function Modal({
         className={[
           "relative w-full",
           sizeClasses,
-          "rounded-2xl border border-white/20 bg-white/90 p-0 shadow-2xl ring-1 ring-black/5",
+          "rounded-2xl border border-white/20 bg-white/85 p-0 shadow-xl ring-1 ring-black/5",
           "dark:border-white/10 dark:bg-zinc-900/90 dark:ring-white/5",
           "transition-all duration-200 ease-out",
           animateIn
@@ -263,15 +263,15 @@ export default function Modal({
         ].join(" ")}
         style={{
           backgroundImage:
-            "radial-gradient(1200px 600px at -10% -20%, rgba(139, 92, 246, 0.18), transparent), radial-gradient(1200px 600px at 110% -20%, rgba(16, 185, 129, 0.14), transparent)",
+            "radial-gradient(900px 480px at 0% 0%, rgba(139, 92, 246, 0.14), transparent 60%), radial-gradient(900px 480px at 100% 0%, rgba(16, 185, 129, 0.10), transparent 60%)",
         }}
       >
         {/* Header */}
         {(title || !hideCloseButton || iconSrc) && (
-          <div className="flex items-center justify-between gap-3 px-5 pb-2 pt-4">
+          <div className="flex items-center justify-between gap-4 px-6 pb-3 pt-5">
             <div className="flex min-w-0 items-center gap-3">
               {iconSrc ? (
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600/10 ring-1 ring-inset ring-violet-400/20 dark:bg-violet-400/10">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/10 ring-1 ring-inset ring-violet-400/20 dark:bg-violet-400/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={iconSrc}
@@ -328,12 +328,12 @@ export default function Modal({
         ) : null}
 
         {/* Body */}
-        <div className="px-5 pb-5 pt-3">{children}</div>
+        <div className="px-6 pb-6 pt-4">{children}</div>
 
         {/* Soft bottom glow */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -bottom-10 left-1/2 h-24 w-[75%] -translate-x-1/2 rounded-full bg-violet-500/20 blur-3xl dark:bg-violet-400/20"
+          className="pointer-events-none absolute -bottom-10 left-1/2 h-28 w-[70%] -translate-x-1/2 rounded-full bg-violet-500/20 blur-3xl dark:bg-violet-400/20"
         />
       </div>
     </div>,

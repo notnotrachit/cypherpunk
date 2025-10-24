@@ -244,20 +244,23 @@ export default function PhantomLogin({
           Install Phantom
         </a>
       ) : (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+        <div className="w-full space-y-3">
+          <div className="w-full">
             <button
               disabled={busy}
               onClick={handleSignIn}
-              className={`inline-flex items-center justify-center rounded-md ${
-                busy ? "bg-gray-400" : "bg-violet-600 hover:bg-violet-700"
-              } px-4 py-2 text-white transition-colors disabled:cursor-not-allowed`}
-              title={
-                address ? `Logged in as ${address}` : "Connect your wallet"
-              }
+              className={`inline-flex w-full items-center justify-center rounded-xl ${
+                busy
+                  ? "bg-zinc-400 dark:bg-zinc-700"
+                  : "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+              } px-5 py-3 text-white shadow-lg ring-1 ring-violet-500/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed`}
+              title="Connect your wallet"
             >
               {busy ? (
-                <span className="inline-flex items-center gap-2">
+                <span
+                  className="inline-flex items-center gap-2"
+                  aria-live="polite"
+                >
                   <Spinner />
                   {connecting
                     ? "Connecting…"
@@ -268,24 +271,18 @@ export default function PhantomLogin({
                         : "Working…"}
                 </span>
               ) : (
-                buttonLabel
+                <span className="inline-flex items-center gap-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/phantom.svg"
+                    alt=""
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  />
+                  {buttonLabel}
+                </span>
               )}
             </button>
-
-            {address ? (
-              <span className="text-sm text-gray-600 dark:text-gray-300">
-                {shortAddress(address)}
-              </span>
-            ) : null}
-
-            {address ? (
-              <button
-                onClick={handleDisconnect}
-                className="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
-              >
-                Disconnect
-              </button>
-            ) : null}
           </div>
 
           {error ? (
@@ -294,7 +291,7 @@ export default function PhantomLogin({
             </div>
           ) : null}
 
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-zinc-500 text-center">
             By clicking “{buttonLabel}”, you will connect your wallet, sign a
             message, and we’ll verify it on the server before granting access.
           </p>

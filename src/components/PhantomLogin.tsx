@@ -194,7 +194,11 @@ export default function PhantomLogin({
       await verifySignature(addr, signatureB58, message);
       setVerifying(false);
 
-      onAuthenticatedAction?.(addr);
+      if (onAuthenticatedAction) {
+        onAuthenticatedAction(addr);
+      } else {
+        window.location.assign("/dashboard");
+      }
     } catch (e: unknown) {
       setConnecting(false);
       setSigning(false);

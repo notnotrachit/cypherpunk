@@ -17,7 +17,11 @@ function isStaticAsset(pathname: string): boolean {
   if (pathname.startsWith("/icons")) return true;
 
   // File extension check (static files)
-  if (/\.(?:png|jpe?g|gif|svg|ico|webp|avif|css|js|txt|json|map|woff2?|ttf|otf)$/i.test(pathname)) {
+  if (
+    /\.(?:png|jpe?g|gif|svg|ico|webp|avif|css|js|txt|json|map|woff2?|ttf|otf)$/i.test(
+      pathname,
+    )
+  ) {
     return true;
   }
   return false;
@@ -50,7 +54,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const url = req.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.searchParams.set("auth", "required");
     return NextResponse.redirect(url);
   }
@@ -60,10 +64,12 @@ export async function middleware(req: NextRequest) {
 
     // Pass along useful auth context to downstream handlers via headers
     const requestHeaders = new Headers(req.headers);
-    if (payload.sub) requestHeaders.set("x-wallet-address", String(payload.sub));
+    if (payload.sub)
+      requestHeaders.set("x-wallet-address", String(payload.sub));
     if (payload.exp) requestHeaders.set("x-session-exp", String(payload.exp));
     if (payload.iat) requestHeaders.set("x-session-iat", String(payload.iat));
-    if (payload.nonce) requestHeaders.set("x-session-nonce", String(payload.nonce));
+    if (payload.nonce)
+      requestHeaders.set("x-session-nonce", String(payload.nonce));
 
     return NextResponse.next({
       request: {
@@ -73,10 +79,13 @@ export async function middleware(req: NextRequest) {
   } catch {
     // Invalid or expired token
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 },
+      );
     }
     const url = req.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.searchParams.set("auth", "expired");
     return NextResponse.redirect(url);
   }
@@ -84,5 +93,7 @@ export async function middleware(req: NextRequest) {
 
 // Exclude Next.js internal assets by default; other exclusions handled in code.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
+  ],
 };

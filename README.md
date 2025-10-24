@@ -1,5 +1,32 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Wallet Authentication (Phantom + Backend Verification)
+
+This project includes a Phantom login flow for Solana, with backend verification before granting access.
+
+- Server-side verification:
+  - GET /api/auth/nonce issues a one-time nonce and a canonical message to sign (an HttpOnly cookie named login_nonce is set).
+  - The wallet signs the message with Phantom.
+  - POST /api/auth/verify validates the signature, domain, and nonce, then sets a short-lived HttpOnly session cookie.
+  - Protected APIs (e.g., GET /api/protected) and pages are gated by middleware that checks the session.
+
+- Client components:
+  - src/components/PhantomLogin.tsx handles connect -> fetch nonce/message -> sign -> verify.
+  - src/components/CheckSessionButton.tsx demonstrates calling a protected API from the browser.
+
+- Run locally:
+  1) Create a .env.local file in the project root and set:
+     AUTH_JWT_SECRET="a-long-random-string"
+  2) Install dependencies:
+     npm install
+  3) Start the dev server:
+     npm run dev
+  4) Open http://localhost:3000 and click “Sign in with Phantom”. After a successful login, try the “Protected” page or the “Check session” button.
+
+- Production notes:
+  - Cookies are marked secure when running under HTTPS.
+  - Rotate AUTH_JWT_SECRET if compromised, and consider longer session lifetimes only if appropriate.
+
 ## Getting Started
 
 First, run the development server:

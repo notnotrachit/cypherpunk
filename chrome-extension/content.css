@@ -1,0 +1,273 @@
+/* Solana Pay Badge (next to name) */
+.cypherpunk-solana-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  margin-left: 4px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  box-shadow: 0 2px 8px rgba(153, 69, 255, 0.4) !important;
+}
+
+.cypherpunk-solana-badge:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.6) !important;
+}
+
+.cypherpunk-solana-badge:active {
+  transform: scale(1.05) !important;
+}
+
+.cypherpunk-solana-badge svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: white !important;
+  display: block !important;
+}
+
+/* Modal Overlay */
+.cypherpunk-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  backdrop-filter: blur(4px);
+}
+
+/* Modal */
+.cypherpunk-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Header */
+.cypherpunk-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cypherpunk-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.cypherpunk-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.cypherpunk-modal-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Modal Body */
+.cypherpunk-modal-body {
+  padding: 24px;
+}
+
+.cypherpunk-wallet-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.cypherpunk-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.cypherpunk-wallet-address {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  color: #111827;
+  font-weight: 600;
+}
+
+.cypherpunk-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.cypherpunk-copy-btn:hover {
+  background: #e5e7eb;
+}
+
+.cypherpunk-amount-input,
+.cypherpunk-message-input {
+  margin-bottom: 20px;
+}
+
+.cypherpunk-amount-input label,
+.cypherpunk-message-input label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.cypherpunk-amount-input input,
+.cypherpunk-message-input textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #111827;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.cypherpunk-amount-input input:focus,
+.cypherpunk-message-input textarea:focus {
+  outline: none;
+  border-color: #9945FF;
+  box-shadow: 0 0 0 3px rgba(153, 69, 255, 0.1);
+}
+
+.cypherpunk-message-input textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Status Messages */
+.cypherpunk-status {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 16px;
+  display: none;
+}
+
+.cypherpunk-status:not(:empty) {
+  display: block;
+}
+
+.cypherpunk-status-info {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.cypherpunk-status-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.cypherpunk-status-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.cypherpunk-status a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* Modal Footer */
+.cypherpunk-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cypherpunk-btn-secondary,
+.cypherpunk-btn-primary {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.cypherpunk-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.cypherpunk-btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.cypherpunk-btn-primary {
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  color: white;
+}
+
+.cypherpunk-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.4);
+}
+
+.cypherpunk-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

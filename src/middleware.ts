@@ -33,12 +33,14 @@ function isPublicPath(pathname: string): boolean {
 
   // Allow unauthenticated access to auth endpoints
   if (pathname.startsWith("/api/auth/")) return true;
-  
+
   // Allow public API endpoints
   if (pathname === "/api/network-info") return true;
   if (pathname === "/api/social/get") return true;
   if (pathname === "/api/social/get-handle") return true;
   if (pathname === "/api/social/find-wallet") return true;
+  if (pathname === "/api/tokens/get-accounts") return true;
+  if (pathname === "/api/tokens/build-transaction") return true;
 
   return false;
 }
@@ -47,9 +49,29 @@ export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
+  // Add CORS headers for Chrome extension
+  const response = NextResponse.next();
+
+  // Allow requests from Chrome extension
+  const origin = req.headers.get('origin');
+  if (origin && (origin.includes('chrome-extension://') || origin.includes('twitter.com') || origin.includes('x.com'))) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 200,
+      headers: response.headers,
+    });
+  }
+
   // Skip protection for public paths
   if (isPublicPath(pathname)) {
-    return NextResponse.next();
+    return response;
   }
 
   const token = req.cookies.get("session")?.value;
@@ -57,7 +79,7 @@ export async function middleware(req: NextRequest) {
   if (!token) {
     // If it's an API route, return 401 JSON; otherwise redirect to home (login)
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: response.headers });
     }
     // Redirect to home page with auth required message
     const url = req.nextUrl.clone();
@@ -78,17 +100,24 @@ export async function middleware(req: NextRequest) {
     if (payload.nonce)
       requestHeaders.set("x-session-nonce", String(payload.nonce));
 
-    return NextResponse.next({
+    const newResponse = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
+
+    // Copy CORS headers to the new response
+    response.headers.forEach((value, key) => {
+      newResponse.headers.set(key, value);
+    });
+
+    return newResponse;
   } catch {
     // Invalid or expired token
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
         { error: "Invalid or expired session" },
-        { status: 401 },
+        { status: 401, headers: response.headers }
       );
     }
     // Redirect to home page with expired message

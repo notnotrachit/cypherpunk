@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Cypherpunk</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .container {
+      padding: 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 12px;
+      background: white;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .status {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .status-label {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .status-value {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.connected {
+      background: #10b981;
+    }
+
+    .status-badge.disconnected {
+      background: #ef4444;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">◎</div>
+      <h1>Cypherpunk</h1>
+      <div class="subtitle">Solana Social Pay</div>
+    </div>
+
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">Status</span>
+        <span class="status-badge connected" id="status-badge">Active</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Network</span>
+        <span class="status-value" id="network">Devnet</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Wallet</span>
+        <span class="status-value" id="wallet">Not Connected</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="http://localhost:3000/dashboard" target="_blank" class="btn btn-primary">
+        Open Dashboard
+      </a>
+      <button class="btn btn-secondary" id="refresh-btn">
+        Refresh Status
+      </button>
+    </div>
+
+    <div class="footer">
+      <p>Visit <a href="http://localhost:3000" target="_blank">webapp</a> to link accounts</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

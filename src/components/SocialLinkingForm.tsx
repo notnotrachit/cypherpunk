@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { signIn, useSession, signOut } from "next-auth/react";
 
 type SocialLinks = {
   twitter: string | null;
@@ -18,14 +19,29 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
   const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const [twitterHandle, setTwitterHandle] = useState("");
-  const [instagramHandle, setInstagramHandle] = useState("");
-  const [linkedinHandle, setLinkedinHandle] = useState("");
+  const { data: session, status } = useSession();
+  const linkedSessionRef = useRef<string | null>(null); // Track which session we've already linked
 
   useEffect(() => {
     fetchSocialLinks();
   }, [walletAddress]);
+
+  // Auto-link when returning from OAuth
+  useEffect(() => {
+    const sessionId = session?.provider
+      ? `${session.provider}-${session.username}`
+      : null;
+
+    // Only link if we have a session, it's authenticated, and we haven't linked this exact session yet
+    if (
+      session &&
+      status === "authenticated" &&
+      sessionId &&
+      linkedSessionRef.current !== sessionId
+    ) {
+      linkToBlockchain();
+    }
+  }, [session, status]);
 
   const fetchSocialLinks = async () => {
     try {
@@ -35,9 +51,6 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
 
       if (data.linked && data.socials) {
         setSocials(data.socials);
-        setTwitterHandle(data.socials.twitter || "");
-        setInstagramHandle(data.socials.instagram || "");
-        setLinkedinHandle(data.socials.linkedin || "");
       }
     } catch (err) {
       console.error("Failed to fetch social links:", err);
@@ -46,35 +59,53 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
     }
   };
 
-  const linkSocial = async (platform: "twitter" | "instagram" | "linkedin", handle: string) => {
-    if (!handle.trim()) {
-      setError(`Please enter a ${platform} handle`);
-      return;
-    }
+  const linkToBlockchain = async () => {
+    if (!session || linking) return;
+
+    const sessionId = `${session.provider}-${session.username}`;
+
+    // Skip if we've already linked this exact session
+    if (linkedSessionRef.current === sessionId) return;
+
+    linkedSessionRef.current = sessionId; // Mark this session as being linked
+    setLinking(true);
 
     try {
-      setLinking(true);
-      setError(null);
-      setSuccess(null);
-
-      const res = await fetch("/api/social/link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, handle }),
-      });
-
+      const res = await fetch("/api/social/link-verified", { method: "POST" });
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to link account");
+        linkedSessionRef.current = null; // Reset on error so user can retry
+        throw new Error(data.error || "Failed to link");
       }
 
-      setSuccess(`${platform} account linked successfully!`);
+      setSuccess(
+        `${session.provider} account (${session.username}) linked successfully!`
+      );
       await fetchSocialLinks();
+
+      // Sign out from NextAuth (clear OAuth session) after successful link
+      setTimeout(async () => {
+        await signOut({ redirect: false });
+        setSuccess(null);
+        // linkedSessionRef stays set to prevent re-linking the same account immediately
+      }, 3000);
     } catch (err: any) {
       setError(err.message || "Failed to link account");
     } finally {
       setLinking(false);
+    }
+  };
+
+  const linkSocial = async (provider: "twitter" | "facebook" | "linkedin") => {
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Trigger OAuth - will redirect to provider and back
+      await signIn(provider, { callbackUrl: "/dashboard" });
+    } catch (err: any) {
+      setError(err.message || "Failed to start OAuth");
     }
   };
 
@@ -88,6 +119,23 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Show authenticated user info */}
+      {session && session.username && (
+        <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200">
+          <p className="font-medium">
+            ✓ Authenticated with {session.provider}:
+          </p>
+          <p className="mt-1 text-xs">
+            Username: <strong>@{session.username}</strong>
+          </p>
+          {linking && (
+            <p className="mt-2 text-xs animate-pulse">
+              Linking to blockchain...
+            </p>
+          )}
+        </div>
+      )}
+
       {error && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
           {error}
@@ -103,22 +151,19 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       {/* Twitter */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Twitter Handle
+          Twitter / X Account
         </label>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={twitterHandle}
-            onChange={(e) => setTwitterHandle(e.target.value)}
-            placeholder="@username"
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
-          />
           <button
-            onClick={() => linkSocial("twitter", twitterHandle)}
+            onClick={() => linkSocial("twitter")}
             disabled={linking}
-            className="rounded-lg bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:bg-zinc-400 dark:disabled:bg-zinc-700"
+            className="flex-1 rounded-lg bg-[#1DA1F2] px-6 py-3 text-sm font-medium text-white hover:bg-[#1a8cd8] disabled:opacity-50 transition-colors"
           >
-            {socials?.twitter ? "Update" : "Link"}
+            {linking
+              ? "Linking..."
+              : socials?.twitter
+              ? "Update Twitter"
+              : "Link with Twitter"}
           </button>
         </div>
         {socials?.twitter && (
@@ -131,22 +176,19 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       {/* Instagram */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Instagram Handle
+          Instagram Account
         </label>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={instagramHandle}
-            onChange={(e) => setInstagramHandle(e.target.value)}
-            placeholder="@username"
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
-          />
           <button
-            onClick={() => linkSocial("instagram", instagramHandle)}
+            onClick={() => linkSocial("facebook")}
             disabled={linking}
-            className="rounded-lg bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:bg-zinc-400 dark:disabled:bg-zinc-700"
+            className="flex-1 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
-            {socials?.instagram ? "Update" : "Link"}
+            {linking
+              ? "Linking..."
+              : socials?.instagram
+              ? "Update Instagram"
+              : "Link with Instagram"}
           </button>
         </div>
         {socials?.instagram && (
@@ -159,22 +201,19 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       {/* LinkedIn */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          LinkedIn Handle
+          LinkedIn Account
         </label>
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={linkedinHandle}
-            onChange={(e) => setLinkedinHandle(e.target.value)}
-            placeholder="username"
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
-          />
           <button
-            onClick={() => linkSocial("linkedin", linkedinHandle)}
+            onClick={() => linkSocial("linkedin")}
             disabled={linking}
-            className="rounded-lg bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:bg-zinc-400 dark:disabled:bg-zinc-700"
+            className="flex-1 rounded-lg bg-[#0A66C2] px-6 py-3 text-sm font-medium text-white hover:bg-[#004182] disabled:opacity-50 transition-colors"
           >
-            {socials?.linkedin ? "Update" : "Link"}
+            {linking
+              ? "Linking..."
+              : socials?.linkedin
+              ? "Update LinkedIn"
+              : "Link with LinkedIn"}
           </button>
         </div>
         {socials?.linkedin && (
@@ -185,11 +224,11 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       </div>
 
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
-        <p className="font-medium">How it works:</p>
+        <p className="font-medium">🔒 Secure OAuth via NextAuth:</p>
         <ul className="mt-2 list-inside list-disc space-y-1 text-xs">
-          <li>Link your social accounts to your Solana wallet</li>
+          <li>Click a button to authenticate with the social platform</li>
+          <li>Your verified handle is linked to your Solana wallet on-chain</li>
           <li>Others can send you tokens using your social handle</li>
-          <li>Your Chrome extension will show a Solana icon on linked profiles</li>
         </ul>
       </div>
     </div>

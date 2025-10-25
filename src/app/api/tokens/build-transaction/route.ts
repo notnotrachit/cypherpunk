@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { 
-  Connection, 
-  PublicKey, 
-  Transaction, 
+import {
+  Connection,
+  PublicKey,
+  Transaction,
   TransactionInstruction,
   SystemProgram
 } from "@solana/web3.js";
-import { 
-  getAssociatedTokenAddress, 
+import {
+  getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
@@ -18,10 +18,10 @@ import bs58 from "bs58";
 export async function POST(request: NextRequest) {
   try {
     console.log("BUILD-TX: Received request");
-    
+
     const body = await request.json();
     console.log("BUILD-TX: Request body:", body);
-    
+
     const { senderWallet, recipientWallet, mint, amount } = body;
 
     if (!senderWallet || !recipientWallet || !mint || !amount) {
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Build send_token instruction
     console.log("BUILD-TX: Building send_token instruction");
-    
+
     // Instruction discriminator for send_token (from IDL)
     const discriminator = Buffer.from([157, 183, 177, 53, 196, 251, 54, 185]);
     const amountBuffer = Buffer.alloc(8);
@@ -105,10 +105,23 @@ export async function POST(request: NextRequest) {
 
     transaction.add(sendTokenIx);
 
+    // Add a memo instruction with timestamp and random nonce to make each transaction unique
+    const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+    const nonce = Math.random().toString(36).substring(2, 15);
+    const memoData = Buffer.from(`Payment:${Date.now()}:${nonce}`);
+    const memoInstruction = new TransactionInstruction({
+      keys: [],
+      programId: MEMO_PROGRAM_ID,
+      data: memoData,
+    });
+    transaction.add(memoInstruction);
+
     // Get recent blockhash
-    const { blockhash } = await connection.getLatestBlockhash();
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = senderPubkey;
+
+    console.log("BUILD-TX: Using blockhash:", blockhash, "Valid until block:", lastValidBlockHeight, "Memo:", memoData.toString());
 
     // Serialize transaction
     const serialized = transaction.serialize({

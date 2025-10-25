@@ -25,6 +25,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (request.action === 'buildUnlinkedTransaction') {
+    buildUnlinkedTransaction(request.socialHandle, request.amount, request.senderWallet)
+      .then(sendResponse)
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
+
   if (request.action === 'sendSignedTransaction') {
     sendSignedTransaction(request.signedTransaction, request.rpcUrl)
       .then(sendResponse)
@@ -113,13 +120,13 @@ async function checkAuthentication() {
 // Build transaction
 async function buildTransaction(recipientWallet, amount, senderWallet) {
   const USDC_MINT = 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr';
-  
+
   // Convert amount to smallest unit (USDC has 6 decimals)
   const amountInSmallestUnit = Math.floor(amount * 1_000_000);
 
   try {
     console.log('Building transaction for:', { senderWallet, recipientWallet, amount: amountInSmallestUnit });
-    
+
     // Build transaction via API
     const response = await fetch(`${API_BASE_URL}/api/tokens/build-transaction`, {
       method: 'POST',
@@ -155,11 +162,56 @@ async function buildTransaction(recipientWallet, amount, senderWallet) {
   }
 }
 
+// Build transaction for unlinked user (send to escrow)
+async function buildUnlinkedTransaction(socialHandle, amount, senderWallet) {
+  const USDC_MINT = 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr';
+
+  // Convert amount to smallest unit (USDC has 6 decimals)
+  const amountInSmallestUnit = Math.floor(amount * 1_000_000);
+
+  try {
+    console.log('Building unlinked transaction for:', { senderWallet, socialHandle, amount: amountInSmallestUnit });
+
+    // Build transaction via API
+    const response = await fetch(`${API_BASE_URL}/api/tokens/build-unlinked-transaction`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        senderWallet,
+        socialHandle,
+        mint: USDC_MINT,
+        amount: amountInSmallestUnit,
+      }),
+    });
+
+    console.log('API response status:', response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('API error:', errorData);
+      throw new Error(errorData.error || 'Failed to build transaction');
+    }
+
+    const data = await response.json();
+    console.log('Transaction built:', data.message);
+
+    return {
+      transaction: data.transaction,
+      message: data.message,
+    };
+  } catch (error) {
+    console.error('Error building unlinked transaction:', error);
+    throw error;
+  }
+}
+
 // Send signed transaction
 async function sendSignedTransaction(signedTransaction, rpcUrl) {
   try {
     console.log('Sending signed transaction to network...');
-    
+
     const response = await fetch(rpcUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -169,14 +221,18 @@ async function sendSignedTransaction(signedTransaction, rpcUrl) {
         method: 'sendTransaction',
         params: [
           signedTransaction,
-          { encoding: 'base58', preflightCommitment: 'confirmed' }
+          { 
+            encoding: 'base58',
+            skipPreflight: true, // Skip simulation to avoid duplicate detection
+            maxRetries: 3
+          }
         ]
       })
     });
 
     const result = await response.json();
     console.log('RPC response:', result);
-    
+
     if (result.error) {
       throw new Error(result.error.message || 'Transaction failed');
     }

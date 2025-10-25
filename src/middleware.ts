@@ -41,6 +41,8 @@ function isPublicPath(pathname: string): boolean {
   if (pathname === "/api/social/find-wallet") return true;
   if (pathname === "/api/tokens/get-accounts") return true;
   if (pathname === "/api/tokens/build-transaction") return true;
+  if (pathname === "/api/tokens/build-unlinked-transaction") return true;
+  // Note: build-claim-transaction requires auth, so it's not in this list
 
   return false;
 }

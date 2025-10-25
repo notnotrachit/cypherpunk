@@ -6,11 +6,11 @@ export default function Home({
 }: {
   searchParams: { auth?: string };
 }) {
-  const authMessage = searchParams.auth === "required" 
+  const authMessage = searchParams.auth === "required"
     ? "Please sign in to access the dashboard"
     : searchParams.auth === "expired"
-    ? "Your session has expired. Please sign in again"
-    : null;
+      ? "Your session has expired. Please sign in again"
+      : null;
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.08),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.08),transparent)] dark:bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.12),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.12),transparent)]">
       <Navbar />

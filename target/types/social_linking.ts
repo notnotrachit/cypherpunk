@@ -301,6 +301,80 @@ export type SocialLinking = {
       ]
     },
     {
+      "name": "closePendingClaim",
+      "discriminator": [
+        135,
+        230,
+        67,
+        245,
+        37,
+        86,
+        247,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pendingClaim",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  99,
+                  108,
+                  97,
+                  105,
+                  109
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "socialHandle"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "socialHandle",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "initialize",
       "discriminator": [
         175,
@@ -1027,6 +1101,41 @@ export type SocialLinking = {
           }
         },
         {
+          "name": "paymentRecord",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "socialHandle"
+              },
+              {
+                "kind": "arg",
+                "path": "paymentIndex"
+              }
+            ]
+          }
+        },
+        {
           "name": "config",
           "pda": {
             "seeds": [
@@ -1061,6 +1170,10 @@ export type SocialLinking = {
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "paymentIndex",
+          "type": "u64"
         }
       ]
     }
@@ -1077,6 +1190,19 @@ export type SocialLinking = {
         250,
         204,
         130
+      ]
+    },
+    {
+      "name": "paymentRecord",
+      "discriminator": [
+        202,
+        168,
+        56,
+        249,
+        127,
+        226,
+        86,
+        226
       ]
     },
     {
@@ -1156,7 +1282,7 @@ export type SocialLinking = {
       }
     },
     {
-      "name": "pendingClaim",
+      "name": "paymentRecord",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1173,8 +1299,40 @@ export type SocialLinking = {
             "type": "u64"
           },
           {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
             "name": "claimed",
             "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pendingClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "socialHandle",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "paymentCount",
+            "type": "u64"
           },
           {
             "name": "bump",

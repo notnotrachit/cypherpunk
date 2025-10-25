@@ -174,6 +174,8 @@ async function checkAndAddSolanaButton(handle) {
 
     if (result.error) {
       console.error('❌ Error checking wallet:', result.error);
+      // Still show button even if there's an error
+      addSolanaButton(handle, null);
       return;
     }
 
@@ -181,16 +183,20 @@ async function checkAndAddSolanaButton(handle) {
       console.log('✅ Wallet found!', result.wallet);
       addSolanaButton(handle, result.wallet);
     } else {
-      console.log('ℹ️ No wallet linked for', handle);
+      console.log('ℹ️ No wallet linked for', handle, '- will use send_to_unlinked');
+      // Show button anyway, will use send_to_unlinked flow
+      addSolanaButton(handle, null);
     }
   } catch (error) {
     console.error('❌ Error in checkAndAddSolanaButton:', error);
+    // Still show button even if there's an error
+    addSolanaButton(handle, null);
   }
 }
 
 // Add Solana Pay button to profile
 function addSolanaButton(handle, walletAddress) {
-  console.log('🎨 Adding Solana button for:', handle);
+  console.log('🎨 Adding Solana button for:', handle, 'Wallet:', walletAddress || 'Not linked');
 
   // Check if button already exists
   if (document.getElementById('cypherpunk-solana-btn')) {
@@ -220,9 +226,9 @@ function addSolanaButton(handle, walletAddress) {
   const badge = document.createElement('button');
   badge.id = 'cypherpunk-solana-btn';
   badge.className = 'cypherpunk-solana-badge';
-  badge.setAttribute('aria-label', 'Pay with Solana');
+  badge.setAttribute('aria-label', walletAddress ? 'Pay with Solana' : 'Send USDC (Claimable)');
   badge.setAttribute('type', 'button');
-  badge.setAttribute('title', 'Pay with Solana');
+  badge.setAttribute('title', walletAddress ? 'Pay with Solana' : 'Send USDC - User can claim when they link wallet');
   badge.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 397.7 311.7" fill="currentColor">
       <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/>
@@ -263,28 +269,42 @@ function openPaymentModal(handle, walletAddress) {
     existingModal.remove();
   }
 
+  const isLinked = !!walletAddress;
+  const modalTitle = isLinked ? `Send USDC to ${handle}` : `Send USDC to ${handle} (Claimable)`;
+  
   // Create modal overlay
   const modal = document.createElement('div');
   modal.id = 'cypherpunk-modal';
   modal.className = 'cypherpunk-modal-overlay';
 
+  const walletInfoHtml = isLinked ? `
+    <div class="cypherpunk-wallet-info">
+      <div class="cypherpunk-label">Wallet Address</div>
+      <div class="cypherpunk-wallet-address">
+        ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}
+        <button class="cypherpunk-copy-btn" onclick="navigator.clipboard.writeText('${walletAddress}')">
+          📋
+        </button>
+      </div>
+    </div>
+  ` : `
+    <div class="cypherpunk-wallet-info">
+      <div class="cypherpunk-label">⚠️ Wallet Not Linked</div>
+      <div class="cypherpunk-wallet-address" style="font-size: 14px; line-height: 1.5;">
+        This user hasn't linked their wallet yet. Your USDC will be held in escrow and they can claim it when they link their wallet.
+      </div>
+    </div>
+  `;
+
   modal.innerHTML = `
     <div class="cypherpunk-modal">
       <div class="cypherpunk-modal-header">
-        <h2>Send USDC to ${handle}</h2>
+        <h2>${modalTitle}</h2>
         <button class="cypherpunk-modal-close" onclick="this.closest('.cypherpunk-modal-overlay').remove()">×</button>
       </div>
       
       <div class="cypherpunk-modal-body">
-        <div class="cypherpunk-wallet-info">
-          <div class="cypherpunk-label">Wallet Address</div>
-          <div class="cypherpunk-wallet-address">
-            ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}
-            <button class="cypherpunk-copy-btn" onclick="navigator.clipboard.writeText('${walletAddress}')">
-              📋
-            </button>
-          </div>
-        </div>
+        ${walletInfoHtml}
         
         <div class="cypherpunk-amount-input">
           <label for="usdc-amount">Amount (USDC)</label>
@@ -314,7 +334,7 @@ function openPaymentModal(handle, walletAddress) {
           Cancel
         </button>
         <button class="cypherpunk-btn-primary" id="send-usdc-btn">
-          Send USDC
+          ${isLinked ? 'Send USDC' : 'Send to Escrow'}
         </button>
       </div>
     </div>
@@ -324,7 +344,7 @@ function openPaymentModal(handle, walletAddress) {
 
   // Add event listener for send button
   document.getElementById('send-usdc-btn').addEventListener('click', () => {
-    sendUSDC(handle, walletAddress);
+    sendUSDC(handle, walletAddress, isLinked);
   });
 
   // Close on overlay click
@@ -335,8 +355,11 @@ function openPaymentModal(handle, walletAddress) {
   });
 }
 
+// Track active transactions to prevent duplicates
+let activeTransactionId = null;
+
 // Send USDC transaction
-async function sendUSDC(_handle, walletAddress) {
+async function sendUSDC(handle, walletAddress, isLinked) {
   const amountInput = document.getElementById('usdc-amount');
   const messageInput = document.getElementById('payment-message');
   const statusDiv = document.getElementById('cypherpunk-status');
@@ -349,6 +372,16 @@ async function sendUSDC(_handle, walletAddress) {
     showStatus('Please enter a valid amount', 'error');
     return;
   }
+
+  // Prevent double-clicks and concurrent transactions
+  if (sendBtn.disabled || activeTransactionId) {
+    console.log('Transaction already in progress, ignoring click');
+    return;
+  }
+
+  // Generate unique transaction ID
+  const txId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  activeTransactionId = txId;
 
   try {
     sendBtn.disabled = true;
@@ -387,10 +420,11 @@ async function sendUSDC(_handle, walletAddress) {
     showStatus('Building transaction...', 'info');
     sendBtn.textContent = 'Building...';
 
-    // Build transaction via API
+    // Build transaction via API - use different action based on whether wallet is linked
     const txResult = await chrome.runtime.sendMessage({
-      action: 'buildTransaction',
+      action: isLinked ? 'buildTransaction' : 'buildUnlinkedTransaction',
       recipientWallet: walletAddress,
+      socialHandle: handle,
       amount: amount,
       senderWallet: senderPublicKey
     });
@@ -403,6 +437,7 @@ async function sendUSDC(_handle, walletAddress) {
     sendBtn.textContent = 'Waiting for signature...';
 
     // Send transaction to Phantom for signing
+    // Clear previous results
     window.cypherpunkTransactionSigned = null;
     window.cypherpunkPhantomError = null;
     
@@ -410,7 +445,8 @@ async function sendUSDC(_handle, walletAddress) {
       type: 'CYPHERPUNK_SEND_TOKENS',
       data: { 
         transactionBase58: txResult.transaction,
-        rpcUrl: 'https://api.devnet.solana.com'
+        rpcUrl: 'https://api.devnet.solana.com',
+        txId: txId // Use our unique transaction ID
       }
     }, '*');
     
@@ -490,7 +526,10 @@ async function sendUSDC(_handle, walletAddress) {
     console.error('Error sending USDC:', error);
     showStatus(`❌ Error: ${error.message}`, 'error');
     sendBtn.disabled = false;
-    sendBtn.textContent = 'Send USDC';
+    sendBtn.textContent = isLinked ? 'Send USDC' : 'Send to Escrow';
+  } finally {
+    // Clear active transaction ID
+    activeTransactionId = null;
   }
 }
 

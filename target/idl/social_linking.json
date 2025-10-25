@@ -295,6 +295,80 @@
       ]
     },
     {
+      "name": "close_pending_claim",
+      "discriminator": [
+        135,
+        230,
+        67,
+        245,
+        37,
+        86,
+        247,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pending_claim",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  110,
+                  100,
+                  105,
+                  110,
+                  103,
+                  95,
+                  99,
+                  108,
+                  97,
+                  105,
+                  109
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "social_handle"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "_social_handle",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "initialize",
       "discriminator": [
         175,
@@ -1021,6 +1095,41 @@
           }
         },
         {
+          "name": "payment_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  121,
+                  109,
+                  101,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  111,
+                  114,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "social_handle"
+              },
+              {
+                "kind": "arg",
+                "path": "payment_index"
+              }
+            ]
+          }
+        },
+        {
           "name": "config",
           "pda": {
             "seeds": [
@@ -1055,6 +1164,10 @@
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "payment_index",
+          "type": "u64"
         }
       ]
     }
@@ -1071,6 +1184,19 @@
         250,
         204,
         130
+      ]
+    },
+    {
+      "name": "PaymentRecord",
+      "discriminator": [
+        202,
+        168,
+        56,
+        249,
+        127,
+        226,
+        86,
+        226
       ]
     },
     {
@@ -1150,7 +1276,7 @@
       }
     },
     {
-      "name": "PendingClaim",
+      "name": "PaymentRecord",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1167,8 +1293,40 @@
             "type": "u64"
           },
           {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
             "name": "claimed",
             "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PendingClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "social_handle",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "payment_count",
+            "type": "u64"
           },
           {
             "name": "bump",

@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import SocialLinkingForm from "@/components/SocialLinkingForm";
 import SocialLookup from "@/components/SocialLookup";
 import NetworkBadge from "@/components/NetworkBadge";
+import ClaimPendingFunds from "@/components/ClaimPendingFunds";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,10 @@ export default async function DashboardPage() {
             <div className="mt-6">
               <SocialLinkingForm walletAddress={walletAddress} />
             </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
+            <ClaimPendingFunds />
           </section>
 
           <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">

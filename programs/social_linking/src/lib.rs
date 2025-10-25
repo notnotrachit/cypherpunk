@@ -85,6 +85,7 @@ pub mod social_linking {
         ctx: Context<SendTokenToUnlinked>,
         social_handle: String,
         amount: u64,
+        payment_index: u64,
     ) -> Result<()> {
         require!(amount > 0, ErrorCode::InvalidAmount);
         require!(social_handle.len() <= 30, ErrorCode::HandleTooLong);
@@ -99,13 +100,32 @@ pub mod social_linking {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
 
-        // Record pending claim
+        // Record or update pending claim
         let pending_claim = &mut ctx.accounts.pending_claim;
-        pending_claim.sender = ctx.accounts.sender.key();
-        pending_claim.social_handle = social_handle;
-        pending_claim.amount = amount;
-        pending_claim.claimed = false;
-        pending_claim.bump = ctx.bumps.pending_claim;
+        
+        // If account was just created or was previously claimed, initialize it
+        if pending_claim.claimed || pending_claim.amount == 0 {
+            pending_claim.social_handle = social_handle.clone();
+            pending_claim.amount = amount;
+            pending_claim.claimed = false;
+            pending_claim.payment_count = 1;
+            pending_claim.bump = ctx.bumps.pending_claim;
+        } else {
+            // Account exists and is unclaimed - accumulate the amount
+            pending_claim.amount = pending_claim.amount.checked_add(amount)
+                .ok_or(ErrorCode::InvalidAmount)?;
+            pending_claim.payment_count = pending_claim.payment_count.checked_add(1)
+                .ok_or(ErrorCode::InvalidAmount)?;
+        }
+
+        // Create individual payment record
+        let payment_record = &mut ctx.accounts.payment_record;
+        payment_record.sender = ctx.accounts.sender.key();
+        payment_record.social_handle = social_handle;
+        payment_record.amount = amount;
+        payment_record.timestamp = Clock::get()?.unix_timestamp;
+        payment_record.claimed = false;
+        payment_record.bump = ctx.bumps.payment_record;
 
         Ok(())
     }
@@ -139,6 +159,27 @@ pub mod social_linking {
 
         pending_claim.claimed = true;
 
+        // Note: Individual payment records remain on-chain for history
+        // They can be queried to show payment history even after claiming
+
+        Ok(())
+    }
+
+    pub fn close_pending_claim(
+        ctx: Context<ClosePendingClaim>,
+        _social_handle: String,
+    ) -> Result<()> {
+        // Admin can close old/invalid pending claim accounts
+        // This is useful for migration after contract upgrades
+        
+        // Transfer lamports from pending_claim to admin
+        let pending_claim_info = ctx.accounts.pending_claim.to_account_info();
+        let admin_info = ctx.accounts.admin.to_account_info();
+        
+        let lamports = pending_claim_info.lamports();
+        **pending_claim_info.try_borrow_mut_lamports()? = 0;
+        **admin_info.try_borrow_mut_lamports()? = admin_info.lamports().checked_add(lamports).unwrap();
+        
         Ok(())
     }
 }
@@ -267,7 +308,7 @@ pub struct SendToken<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(social_handle: String)]
+#[instruction(social_handle: String, amount: u64, payment_index: u64)]
 pub struct SendTokenToUnlinked<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
@@ -287,13 +328,22 @@ pub struct SendTokenToUnlinked<'info> {
     pub escrow_token_account: Account<'info, TokenAccount>,
     
     #[account(
-        init,
+        init_if_needed,
         payer = sender,
         space = 8 + PendingClaim::INIT_SPACE,
         seeds = [b"pending_claim", social_handle.as_bytes()],
         bump
     )]
     pub pending_claim: Account<'info, PendingClaim>,
+    
+    #[account(
+        init,
+        payer = sender,
+        space = 8 + PaymentRecord::INIT_SPACE,
+        seeds = [b"payment_record", social_handle.as_bytes(), payment_index.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub payment_record: Account<'info, PaymentRecord>,
     
     #[account(seeds = [b"config"], bump = config.bump)]
     pub config: Account<'info, Config>,
@@ -345,6 +395,28 @@ pub struct ClaimToken<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+#[derive(Accounts)]
+#[instruction(social_handle: String)]
+pub struct ClosePendingClaim<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    #[account(
+        seeds = [b"config"], 
+        bump = config.bump,
+        constraint = config.admin == admin.key() @ ErrorCode::Unauthorized
+    )]
+    pub config: Account<'info, Config>,
+    
+    /// CHECK: We use UncheckedAccount because the account might have old structure
+    #[account(
+        mut,
+        seeds = [b"pending_claim", social_handle.as_bytes()],
+        bump
+    )]
+    pub pending_claim: UncheckedAccount<'info>,
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct Config {
@@ -368,10 +440,22 @@ pub struct SocialLink {
 #[account]
 #[derive(InitSpace)]
 pub struct PendingClaim {
+    #[max_len(30)]
+    pub social_handle: String,
+    pub amount: u64,
+    pub claimed: bool,
+    pub payment_count: u64,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct PaymentRecord {
     pub sender: Pubkey,
     #[max_len(30)]
     pub social_handle: String,
     pub amount: u64,
+    pub timestamp: i64,
     pub claimed: bool,
     pub bump: u8,
 }

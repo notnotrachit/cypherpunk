@@ -40,22 +40,24 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(91, 112, 131, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999999;
-  backdrop-filter: blur(4px);
 }
 
 /* Modal */
 .cypherpunk-modal {
-  background: white;
+  background: rgb(255, 255, 255);
   border-radius: 16px;
   width: 90%;
-  max-width: 480px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease-out;
+  max-width: 600px;
+  max-height: 90vh;
+  box-shadow: rgba(101, 119, 134, 0.2) 0px 0px 15px, rgba(101, 119, 134, 0.15) 0px 0px 3px 1px;
+  animation: slideUp 0.3s cubic-bezier(0, 0, 0.2, 1);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 @keyframes slideUp {
@@ -63,6 +65,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -74,55 +77,60 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(239, 243, 244);
 }
 
 .cypherpunk-modal-header h2 {
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: rgb(15, 20, 25);
+  line-height: 24px;
 }
 
 .cypherpunk-modal-close {
   background: none;
   border: none;
-  font-size: 28px;
-  color: #6b7280;
+  font-size: 20px;
+  color: rgb(15, 20, 25);
   cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  padding: 8px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  transition: all 0.2s;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .cypherpunk-modal-close:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: rgba(15, 20, 25, 0.1);
 }
 
 /* Modal Body */
 .cypherpunk-modal-body {
-  padding: 24px;
+  padding: 20px 16px;
+  background: rgb(255, 255, 255);
+  max-height: calc(90vh - 120px);
+  overflow-y: auto;
 }
 
 .cypherpunk-wallet-info {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+  background: rgb(247, 249, 249);
+  border: 1px solid rgb(207, 217, 222);
+  border-radius: 4px;
+  padding: 12px;
   margin-bottom: 20px;
 }
 
 .cypherpunk-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgb(83, 100, 113);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -132,24 +140,26 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 14px;
-  color: #111827;
-  font-weight: 600;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 15px;
+  color: rgb(15, 20, 25);
+  font-weight: 400;
+  word-break: break-all;
 }
 
 .cypherpunk-copy-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
   padding: 4px;
   border-radius: 4px;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .cypherpunk-copy-btn:hover {
-  background: #e5e7eb;
+  background: rgba(15, 20, 25, 0.1);
 }
 
 .cypherpunk-amount-input,
@@ -160,44 +170,66 @@
 .cypherpunk-amount-input label,
 .cypherpunk-message-input label {
   display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(15, 20, 25);
+  margin-bottom: 12px;
+  line-height: 20px;
 }
 
 .cypherpunk-amount-input input,
 .cypherpunk-message-input textarea {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 16px;
-  color: #111827;
+  padding: 12px;
+  border: 1px solid rgb(207, 217, 222);
+  border-radius: 4px;
+  font-size: 17px;
+  color: rgb(15, 20, 25);
   transition: all 0.2s;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: rgb(255, 255, 255);
+  box-sizing: border-box;
+}
+
+.cypherpunk-amount-input input:hover,
+.cypherpunk-message-input textarea:hover {
+  border-color: rgb(136, 153, 166);
 }
 
 .cypherpunk-amount-input input:focus,
 .cypherpunk-message-input textarea:focus {
   outline: none;
-  border-color: #9945FF;
-  box-shadow: 0 0 0 3px rgba(153, 69, 255, 0.1);
+  border-color: rgb(29, 155, 240);
+  box-shadow: rgb(29, 155, 240) 0px 0px 0px 1px;
+  background: rgb(255, 255, 255);
 }
 
 .cypherpunk-message-input textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
+  line-height: 20px;
 }
 
 /* Status Messages */
 .cypherpunk-status {
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 400;
   margin-top: 16px;
   display: none;
+  animation: fadeIn 0.2s ease-out;
+  line-height: 20px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .cypherpunk-status:not(:empty) {
@@ -205,69 +237,78 @@
 }
 
 .cypherpunk-status-info {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #93c5fd;
+  background: rgb(229, 242, 255);
+  color: rgb(15, 20, 25);
+  border: 1px solid rgb(29, 155, 240);
 }
 
 .cypherpunk-status-success {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background: rgb(0, 186, 124, 0.1);
+  color: rgb(0, 120, 80);
+  border: 1px solid rgb(0, 186, 124);
 }
 
 .cypherpunk-status-error {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
+  background: rgb(249, 24, 128, 0.1);
+  color: rgb(200, 0, 80);
+  border: 1px solid rgb(249, 24, 128);
 }
 
 .cypherpunk-status a {
-  color: inherit;
+  color: rgb(29, 155, 240);
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.cypherpunk-status a:hover {
   text-decoration: underline;
-  font-weight: 600;
 }
 
 /* Modal Footer */
 .cypherpunk-modal-footer {
   display: flex;
   gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e5e7eb;
+  padding: 16px;
+  border-top: 1px solid rgb(239, 243, 244);
 }
 
 .cypherpunk-btn-secondary,
 .cypherpunk-btn-primary {
   flex: 1;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 0;
+  min-height: 52px;
+  border-radius: 9999px;
+  font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
+  transition: background-color 0.2s;
+  border: 1px solid rgb(207, 217, 222);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .cypherpunk-btn-secondary {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgb(255, 255, 255);
+  color: rgb(15, 20, 25);
 }
 
 .cypherpunk-btn-secondary:hover {
-  background: #e5e7eb;
+  background: rgba(15, 20, 25, 0.1);
 }
 
 .cypherpunk-btn-primary {
-  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
-  color: white;
+  background: rgb(15, 20, 25);
+  color: rgb(255, 255, 255);
+  border: none;
 }
 
 .cypherpunk-btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.4);
+  background: rgb(39, 44, 48);
 }
 
 .cypherpunk-btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }

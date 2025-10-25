@@ -24,6 +24,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch(error => sendResponse({ error: error.message }));
     return true;
   }
+
+  if (request.action === 'sendSignedTransaction') {
+    sendSignedTransaction(request.signedTransaction, request.rpcUrl)
+      .then(sendResponse)
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
 });
 
 // Check if a Twitter handle has a linked wallet
@@ -144,6 +151,45 @@ async function buildTransaction(recipientWallet, amount, senderWallet) {
     };
   } catch (error) {
     console.error('Error building transaction:', error);
+    throw error;
+  }
+}
+
+// Send signed transaction
+async function sendSignedTransaction(signedTransaction, rpcUrl) {
+  try {
+    console.log('Sending signed transaction to network...');
+    
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [
+          signedTransaction,
+          { encoding: 'base58', preflightCommitment: 'confirmed' }
+        ]
+      })
+    });
+
+    const result = await response.json();
+    console.log('RPC response:', result);
+    
+    if (result.error) {
+      throw new Error(result.error.message || 'Transaction failed');
+    }
+
+    const signature = result.result;
+    console.log('Transaction sent successfully:', signature);
+
+    return {
+      signature,
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error sending transaction:', error);
     throw error;
   }
 }

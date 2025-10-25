@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
     // Build send_token instruction
     console.log("BUILD-TX: Building send_token instruction");
     
-    // Instruction discriminator for send_token
-    const discriminator = Buffer.from([0xc4, 0x9e, 0x93, 0x4e, 0x4f, 0x9d, 0x6c, 0x8a]);
+    // Instruction discriminator for send_token (from IDL)
+    const discriminator = Buffer.from([157, 183, 177, 53, 196, 251, 54, 185]);
     const amountBuffer = Buffer.alloc(8);
     amountBuffer.writeBigUInt64LE(BigInt(amount));
     const instructionData = Buffer.concat([discriminator, amountBuffer]);

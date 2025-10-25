@@ -409,12 +409,13 @@ async function sendUSDC(_handle, walletAddress) {
     window.postMessage({ 
       type: 'CYPHERPUNK_SEND_TOKENS',
       data: { 
-        transactionBase58: txResult.transaction
+        transactionBase58: txResult.transaction,
+        rpcUrl: 'https://api.devnet.solana.com'
       }
     }, '*');
     
     // Wait for transaction to be signed
-    await new Promise((resolve, reject) => {
+    const signedResult = await new Promise((resolve, reject) => {
       const checkInterval = setInterval(() => {
         if (window.cypherpunkTransactionSigned) {
           clearInterval(checkInterval);
@@ -432,10 +433,40 @@ async function sendUSDC(_handle, walletAddress) {
       }, 60000);
     });
 
-    const result = window.cypherpunkTransactionSigned;
-    
-    if (result.success) {
-      const txSignature = result.signature;
+    // If transaction needs to be sent, send it via background script
+    if (signedResult.needsSending) {
+      showStatus('Sending transaction to network...', 'info');
+      sendBtn.textContent = 'Sending...';
+
+      const sendResult = await chrome.runtime.sendMessage({
+        action: 'sendSignedTransaction',
+        signedTransaction: signedResult.signedTransaction,
+        rpcUrl: signedResult.rpcUrl
+      });
+
+      if (sendResult.error) {
+        throw new Error(sendResult.error);
+      }
+
+      const txSignature = sendResult.signature;
+      console.log('✅ Transaction sent:', txSignature);
+
+      showStatus(`✅ Successfully sent ${amount} USDC!`, 'success');
+      sendBtn.textContent = 'Sent!';
+
+      // Show transaction link
+      setTimeout(() => {
+        statusDiv.innerHTML += `<br><a href="https://explorer.solana.com/tx/${txSignature}?cluster=devnet" target="_blank" style="color: #14F195; text-decoration: underline;">View on Explorer</a>`;
+      }, 500);
+
+      // Close modal after 5 seconds
+      setTimeout(() => {
+        const modal = document.getElementById('cypherpunk-modal');
+        if (modal) modal.remove();
+      }, 5000);
+    } else if (signedResult.success) {
+      // Old flow for backward compatibility
+      const txSignature = signedResult.signature;
       console.log('✅ Transaction confirmed:', txSignature);
 
       showStatus(`✅ Successfully sent ${amount} USDC!`, 'success');
@@ -452,7 +483,7 @@ async function sendUSDC(_handle, walletAddress) {
         if (modal) modal.remove();
       }, 5000);
     } else {
-      throw new Error(result.message || 'Transaction failed');
+      throw new Error(signedResult.message || 'Transaction failed');
     }
 
   } catch (error) {

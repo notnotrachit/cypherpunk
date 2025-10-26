@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: "P22 Cusp Round";
+    src: url("/fonts/p22-cusp-round.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     --background: #ffffff;
     --foreground: #171717;
@@ -10,6 +18,7 @@
     --color-foreground: var(--foreground);
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
+    --font-logo: "P22 Cusp Round";
 }
 
 @media (prefers-color-scheme: dark) {

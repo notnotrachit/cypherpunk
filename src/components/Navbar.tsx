@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
 import PhantomLogin from "./PhantomLogin";
+import { RiArrowRightLine } from "react-icons/ri";
+import { CgSpinner } from "react-icons/cg";
 
 type Props = {
   className?: string;
@@ -69,47 +71,27 @@ export default function Navbar({
   return (
     <nav
       className={[
-        "sticky top-0 z-40",
-        "backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:supports-[backdrop-filter]:bg-zinc-900/70",
-        "bg-white/80 dark:bg-zinc-900/80",
-        "border-b border-zinc-200/70 dark:border-zinc-800/70",
+        "bg-transparent dark:bg-transparent",
+        "border-b border-transparent",
         className ?? "",
       ].join(" ")}
       aria-label="Global Navigation"
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:h-16 sm:px-6">
         {/* Brand */}
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center">
           <Link
             href="/"
-            className="group flex items-center gap-2 rounded-lg px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+            className="group rounded-lg px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={iconSrc}
-              alt=""
-              className="h-7 w-7 rounded-xl ring-1 ring-white/30 group-hover:scale-[1.03] transition-transform dark:ring-white/10"
-              draggable={false}
-            />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Cypherpunk
-              </span>
-              <span className="text-[10px] font-medium text-violet-700/80 dark:text-violet-300/80">
-                Solana Auth
-              </span>
-            </div>
+            <span className="text-3xl font-bold tracking-wider text-zinc-900 dark:text-zinc-100 font-logo">
+              RIVO
+            </span>
           </Link>
         </div>
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
-          {address ? (
-            <span className="hidden rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 md:inline dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
-              {shortAddress(address)}
-            </span>
-          ) : null}
-
           {address ? (
             <button
               type="button"
@@ -127,7 +109,7 @@ export default function Navbar({
             >
               {loggingOut ? (
                 <span className="inline-flex items-center gap-2">
-                  <Spinner className="text-white" />
+                  <CgSpinner className="h-4 w-4 animate-spin text-white" />
                   Logging out…
                 </span>
               ) : (
@@ -142,16 +124,10 @@ export default function Navbar({
               type="button"
               onClick={openConnectModal}
               className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-3 py-1.5 text-sm font-medium text-white ring-1 ring-violet-500/30 transition-all hover:scale-[1.01] hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:bg-violet-500 dark:hover:bg-violet-600"
-              title="Connect Wallet"
+              title="Get Started"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/phantom.svg"
-                alt=""
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
-              Connect Wallet
+              <RiArrowRightLine className="h-4 w-4" aria-hidden="true" />
+              Get Started
             </button>
           )}
         </div>
@@ -185,32 +161,6 @@ export default function Navbar({
         </div>
       ) : null}
     </nav>
-  );
-}
-
-function Spinner({ className }: { className?: string }) {
-  return (
-    <svg
-      className={["h-4 w-4 animate-spin", className ?? ""].join(" ")}
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
-    </svg>
   );
 }
 

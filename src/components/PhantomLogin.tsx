@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import bs58 from "bs58";
+import { RiWallet3Line } from "react-icons/ri";
+import { CgSpinner } from "react-icons/cg";
 
 type Props = {
   className?: string;
@@ -239,9 +241,12 @@ export default function PhantomLogin({
           href="https://phantom.app/download"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-white hover:bg-gray-800"
+          className="inline-flex w-full items-center justify-center rounded-md bg-violet-600 px-5 py-3 text-sm font-medium text-white transition-all hover:bg-violet-700 focus:outline-none  dark:bg-violet-500 dark:hover:bg-violet-600"
         >
-          Install Phantom
+          <span className="inline-flex items-center gap-2">
+            <RiWallet3Line className="h-5 w-5" aria-hidden="true" />
+            Install Phantom
+          </span>
         </a>
       ) : (
         <div className="w-full space-y-3">
@@ -249,11 +254,11 @@ export default function PhantomLogin({
             <button
               disabled={busy}
               onClick={handleSignIn}
-              className={`inline-flex w-full items-center justify-center rounded-xl ${
+              className={`inline-flex w-full items-center justify-center rounded-md ${
                 busy
-                  ? "bg-zinc-400 dark:bg-zinc-700"
-                  : "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-              } px-5 py-3 text-white shadow-lg ring-1 ring-violet-500/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed`}
+                  ? "bg-zinc-400 dark:bg-zinc-700 cursor-wait"
+                  : "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+              } px-5 py-3 text-sm font-medium text-white transition-all focus:outline-none disabled:cursor-not-allowed`}
               title="Connect your wallet"
             >
               {busy ? (
@@ -261,7 +266,7 @@ export default function PhantomLogin({
                   className="inline-flex items-center gap-2"
                   aria-live="polite"
                 >
-                  <Spinner />
+                  <CgSpinner className="h-4 w-4 animate-spin text-white" />
                   {connecting
                     ? "Connecting…"
                     : signing
@@ -272,13 +277,7 @@ export default function PhantomLogin({
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/phantom.svg"
-                    alt=""
-                    className="h-5 w-5"
-                    aria-hidden="true"
-                  />
+                  <RiWallet3Line className="h-5 w-5" aria-hidden="true" />
                   {buttonLabel}
                 </span>
               )}
@@ -298,31 +297,5 @@ export default function PhantomLogin({
         </div>
       )}
     </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg
-      className="h-4 w-4 animate-spin text-white"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
-    </svg>
   );
 }

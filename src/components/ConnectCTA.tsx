@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import PhantomLogin from "./PhantomLogin";
 import { RiArrowRightLine } from "react-icons/ri";
 import { CgSpinner } from "react-icons/cg";
+import { SiGitconnected } from "react-icons/si";
 
 type Props = {
   className?: string;
@@ -101,20 +102,14 @@ export default function ConnectCTA({
             open={open}
             onCloseAction={closeModal}
             title="Connect your wallet"
-            iconSrc="/phantom.svg"
+            icon={<SiGitconnected className="h-5 w-5" aria-hidden="true" />}
             description="Connect your Phantom wallet and sign a message. We’ll verify it on the server to securely sign you in."
             size="sm"
           >
-            <div className="space-y-5">
-              <div className="rounded-xl bg-zinc-100/70 p-4 text-sm text-zinc-600 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-900/50 dark:text-zinc-300 dark:ring-zinc-800">
-                We’ll never request a transaction or funds for sign‑in. This
-                only proves you control the wallet.
-              </div>
-              <PhantomLogin
-                buttonLabel="Continue with Phantom"
-                onAuthenticatedAction={onAuthenticated}
-              />
-            </div>
+            <PhantomLogin
+              buttonLabel="Continue with Phantom"
+              onAuthenticatedAction={onAuthenticated}
+            />
           </Modal>
         </>
       )}

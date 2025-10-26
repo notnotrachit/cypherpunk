@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Extend Window interface for Phantom
 interface PhantomWallet {
@@ -30,9 +30,9 @@ export default function ClaimPendingFunds() {
 
   useEffect(() => {
     // Get user info
-    fetch('/api/user/me', { credentials: 'include' })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+    fetch("/api/user/me", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         if (data?.wallet) {
           setPublicKey(data.wallet);
         }
@@ -42,7 +42,7 @@ export default function ClaimPendingFunds() {
 
   const checkPendingClaims = async () => {
     if (!publicKey) {
-      setError('Please sign in first');
+      setError("Please sign in first");
       return;
     }
 
@@ -51,8 +51,8 @@ export default function ClaimPendingFunds() {
     setPendingClaims([]);
 
     try {
-      const response = await fetch('/api/tokens/pending-claims', {
-        credentials: 'include',
+      const response = await fetch("/api/tokens/pending-claims", {
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -62,9 +62,9 @@ export default function ClaimPendingFunds() {
 
       const data = await response.json();
       setPendingClaims(data.claims || []);
-      
+
       if (data.claims.length === 0) {
-        setError('No pending claims found');
+        setError("No pending claims found");
       }
     } catch (err: any) {
       console.error('Error checking pending claims:', err);
@@ -81,11 +81,11 @@ export default function ClaimPendingFunds() {
     try {
       const response = await fetch(
         `/api/tokens/payment-history?handle=${encodeURIComponent(handle)}`,
-        { credentials: 'include' }
+        { credentials: "include" },
       );
 
       if (!response.ok) {
-        throw new Error('Failed to load payment history');
+        throw new Error("Failed to load payment history");
       }
 
       const data = await response.json();
@@ -101,7 +101,7 @@ export default function ClaimPendingFunds() {
 
   const claimFunds = async (handle: string) => {
     if (!publicKey) {
-      setError('Please sign in first');
+      setError("Please sign in first");
       return;
     }
 
@@ -112,16 +112,16 @@ export default function ClaimPendingFunds() {
     try {
       // Check if Phantom is available
       if (!window.solana || !window.solana.isPhantom) {
-        throw new Error('Phantom wallet not found. Please install Phantom.');
+        throw new Error("Phantom wallet not found. Please install Phantom.");
       }
 
       // Build the claim transaction via API
-      const buildResponse = await fetch('/api/tokens/build-claim-transaction', {
-        method: 'POST',
+      const buildResponse = await fetch("/api/tokens/build-claim-transaction", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({ socialHandle: handle }),
       });
 
@@ -134,35 +134,36 @@ export default function ClaimPendingFunds() {
 
       // Decode base58 transaction
       const decodeBase58 = (str: string) => {
-        const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        const ALPHABET =
+          "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         const ALPHABET_MAP: { [key: string]: number } = {};
         for (let i = 0; i < ALPHABET.length; i++) {
           ALPHABET_MAP[ALPHABET[i]] = i;
         }
-        
+
         let bytes = [0];
         for (let i = 0; i < str.length; i++) {
           const c = str[i];
-          if (!(c in ALPHABET_MAP)) throw new Error('Invalid base58 character');
-          
+          if (!(c in ALPHABET_MAP)) throw new Error("Invalid base58 character");
+
           let carry = ALPHABET_MAP[c];
           for (let j = 0; j < bytes.length; j++) {
             carry += bytes[j] * 58;
             bytes[j] = carry & 0xff;
             carry >>= 8;
           }
-          
+
           while (carry > 0) {
             bytes.push(carry & 0xff);
             carry >>= 8;
           }
         }
-        
+
         // Add leading zeros
-        for (let i = 0; i < str.length && str[i] === '1'; i++) {
+        for (let i = 0; i < str.length && str[i] === "1"; i++) {
           bytes.push(0);
         }
-        
+
         return new Uint8Array(bytes.reverse());
       };
 
@@ -199,10 +200,12 @@ export default function ClaimPendingFunds() {
         Claim Pending Funds
       </h2>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-        Check if anyone has sent you USDC before you linked your wallet. These funds are held in escrow waiting for you to claim them.
+        Check if anyone has sent you USDC before you linked your wallet. These
+        funds are held in escrow waiting for you to claim them.
       </p>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-        Note: If multiple people sent you funds, the total amount is accumulated but only the most recent sender is shown.
+        Note: If multiple people sent you funds, the total amount is accumulated
+        but only the most recent sender is shown.
       </p>
 
       <div className="mt-6">
@@ -211,7 +214,7 @@ export default function ClaimPendingFunds() {
           disabled={!publicKey || checking}
           className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          {checking ? 'Checking...' : 'Check for Pending Claims'}
+          {checking ? "Checking..." : "Check for Pending Claims"}
         </button>
       </div>
 
@@ -227,7 +230,7 @@ export default function ClaimPendingFunds() {
             {success}
             {(window as any).lastClaimSignature && (
               <>
-                {' '}
+                {" "}
                 <a
                   href={`https://explorer.solana.com/tx/${(window as any).lastClaimSignature}?cluster=devnet`}
                   target="_blank"
@@ -263,17 +266,25 @@ export default function ClaimPendingFunds() {
                     </p>
                     {claim.paymentCount > 1 ? (
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-500">
-                        From: <span className="font-semibold">{claim.paymentCount} payment{claim.paymentCount !== 1 ? 's' : ''}</span>
+                        From:{" "}
+                        <span className="font-semibold">
+                          {claim.paymentCount} payment
+                          {claim.paymentCount !== 1 ? "s" : ""}
+                        </span>
                         <span className="ml-1 text-zinc-400 dark:text-zinc-600">
-                          (most recent: {claim.sender.slice(0, 8)}...{claim.sender.slice(-8)})
+                          (most recent: {claim.sender.slice(0, 8)}...
+                          {claim.sender.slice(-8)})
                         </span>
                       </p>
                     ) : (
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-500">
-                        From: <span className="font-mono">{claim.sender.slice(0, 8)}...{claim.sender.slice(-8)}</span>
+                        From:{" "}
+                        <span className="font-mono">
+                          {claim.sender.slice(0, 8)}...{claim.sender.slice(-8)}
+                        </span>
                       </p>
                     )}
-                    
+
                     <button
                       onClick={() => {
                         if (expandedClaim === claim.handle) {
@@ -287,10 +298,10 @@ export default function ClaimPendingFunds() {
                       className="mt-2 text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 underline"
                     >
                       {loadingHistory && expandedClaim === claim.handle
-                        ? 'Loading...'
+                        ? "Loading..."
                         : expandedClaim === claim.handle
-                        ? 'Hide payment history'
-                        : 'View payment history'}
+                          ? "Hide payment history"
+                          : "View payment history"}
                     </button>
                   </div>
                   <button
@@ -298,7 +309,7 @@ export default function ClaimPendingFunds() {
                     disabled={loading}
                     className="ml-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-green-500 dark:hover:bg-green-400"
                   >
-                    {loading ? 'Claiming...' : 'Claim'}
+                    {loading ? "Claiming..." : "Claim"}
                   </button>
                 </div>
               </div>
@@ -306,7 +317,9 @@ export default function ClaimPendingFunds() {
               {expandedClaim === claim.handle && paymentHistory && (
                 <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 bg-white dark:bg-zinc-900">
                   <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
-                    Payment History ({paymentHistory.payments.length} transaction{paymentHistory.payments.length !== 1 ? 's' : ''})
+                    Payment History ({paymentHistory.payments.length}{" "}
+                    transaction{paymentHistory.payments.length !== 1 ? "s" : ""}
+                    )
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {paymentHistory.payments.map((payment: any, idx: number) => (
@@ -316,10 +329,13 @@ export default function ClaimPendingFunds() {
                       >
                         <div className="flex-1">
                           <p className="font-mono text-zinc-900 dark:text-zinc-100">
-                            {payment.sender.slice(0, 8)}...{payment.sender.slice(-8)}
+                            {payment.sender.slice(0, 8)}...
+                            {payment.sender.slice(-8)}
                           </p>
                           <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">
-                            {new Date(payment.timestamp * 1000).toLocaleString()}
+                            {new Date(
+                              payment.timestamp * 1000,
+                            ).toLocaleString()}
                           </p>
                         </div>
                         <div className="text-right">

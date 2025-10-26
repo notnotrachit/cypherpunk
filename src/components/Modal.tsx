@@ -24,6 +24,8 @@ export type ModalProps = {
   initialFocusRef?: React.RefObject<HTMLElement>;
   // Optional top-left icon (e.g., /phantom.svg)
   iconSrc?: string;
+  // Optional custom React icon element to render in header
+  icon?: React.ReactNode;
   // Optional description for accessibility
   description?: string;
   // If true, pressing Escape will not close the modal
@@ -71,6 +73,7 @@ export default function Modal({
   closeOnBackdrop = true,
   initialFocusRef,
   iconSrc,
+  icon,
   description,
   disableEsc = false,
   disableBackdropClose = false,
@@ -235,7 +238,7 @@ export default function Modal({
         "fixed inset-0 z-50",
         "flex items-center justify-center",
         "px-4 py-10 sm:px-6",
-        "backdrop-blur-[3px]",
+        "bg-black/50",
       ].join(" ")}
     >
       {/* Backdrop */}
@@ -253,9 +256,8 @@ export default function Modal({
         className={[
           "relative w-full",
           sizeClasses,
-          "rounded-2xl border border-white/20 bg-white/85 p-0 shadow-xl ring-1 ring-black/5",
-          "dark:border-white/10 dark:bg-zinc-900/90 dark:ring-white/5",
-          "transition-all duration-200 ease-out",
+          "rounded-xl bg-neutral-950",
+          "transition-all duration-200 ease-out ring-none",
           animateIn
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-2 scale-[0.98]",
@@ -263,15 +265,17 @@ export default function Modal({
         ].join(" ")}
         style={{
           backgroundImage:
-            "radial-gradient(900px 480px at 0% 0%, rgba(139, 92, 246, 0.14), transparent 60%), radial-gradient(900px 480px at 100% 0%, rgba(16, 185, 129, 0.10), transparent 60%)",
+            "radial-gradient(900px 480px at 0% 0%, rgba(139, 92, 246, 0.08), transparent 60%), radial-gradient(900px 480px at 100% 0%, rgba(16, 185, 129, 0.06), transparent 60%)",
         }}
       >
         {/* Header */}
-        {(title || !hideCloseButton || iconSrc) && (
+        {(title || !hideCloseButton || icon || iconSrc) && (
           <div className="flex items-center justify-between gap-4 px-6 pb-3 pt-5">
-            <div className="flex min-w-0 items-center gap-3">
-              {iconSrc ? (
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/10 ring-1 ring-inset ring-violet-400/20 dark:bg-violet-400/10">
+            <div className="flex min-w-0 items-center">
+              {icon ? (
+                <span className="inline-flexh-10 w-10">{icon}</span>
+              ) : iconSrc ? (
+                <span className="h-10 w-10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={iconSrc}
@@ -329,12 +333,6 @@ export default function Modal({
 
         {/* Body */}
         <div className="px-6 pb-6 pt-4">{children}</div>
-
-        {/* Soft bottom glow */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-10 left-1/2 h-28 w-[70%] -translate-x-1/2 rounded-full bg-violet-500/20 blur-3xl dark:bg-violet-400/20"
-        />
       </div>
     </div>,
     document.body,

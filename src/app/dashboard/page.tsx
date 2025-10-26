@@ -4,7 +4,12 @@ import { verifySessionJwt } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 import SocialLinkingForm from "@/components/SocialLinkingForm";
 import SocialLookup from "@/components/SocialLookup";
-import NetworkBadge from "@/components/NetworkBadge";
+import {
+  RiWallet3Line,
+  RiLinksLine,
+  RiSearchLine,
+  RiCoinsLine,
+} from "react-icons/ri";
 import ClaimPendingFunds from "@/components/ClaimPendingFunds";
 
 export const dynamic = "force-dynamic";
@@ -28,54 +33,71 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.08),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.08),transparent)] dark:bg-[radial-gradient(1200px_600px_at_-10%_-20%,rgba(139,92,246,.12),transparent),radial-gradient(1200px_600px_at_110%_-20%,rgba(16,185,129,.12),transparent)]">
       <Navbar address={walletAddress} />
-      <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-        <div className="space-y-6">
-          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-                  Dashboard
-                </h1>
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  Connected wallet:{" "}
-                  <code className="rounded bg-zinc-100 px-2 py-1 text-xs dark:bg-zinc-800">
-                    {walletAddress}
-                  </code>
-                </p>
+      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <header className="mb-10">
+          <h1 className="font-logo text-3xl sm:text-4xl md:text-5xl tracking-tight text-violet-400">
+            Dashboard
+          </h1>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-zinc-200/60 bg-white/70 px-3 py-1.5 text-xs text-zinc-700 ring-1 ring-black/5 backdrop-blur dark:border-zinc-800/60 dark:bg-zinc-900/70 dark:text-zinc-300 dark:ring-white/5">
+            <RiWallet3Line className="h-4 w-4 text-violet-500" />
+            <span className="font-mono">{walletAddress}</span>
+          </div>
+        </header>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Link Socials */}
+          <div className="md:col-span-2">
+            <div className="group relative overflow-hidden rounded-2xl border border-zinc-200/50 bg-linear-to-br from-white to-zinc-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800/50 dark:from-zinc-900 dark:to-zinc-900/50">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-linear-to-br from-violet-500/10 to-fuchsia-500/10 blur-2xl transition-all group-hover:scale-150" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center rounded-xl bg-linear-to-br from-violet-500/10 to-fuchsia-500/10 p-3 ring-1 ring-violet-500/20 dark:ring-violet-500/30">
+                  <RiLinksLine className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                </div>
+                <h3 className="mt-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Link Social Accounts
+                </h3>
+                <div className="mt-4">
+                  <SocialLinkingForm walletAddress={walletAddress} />
+                </div>
               </div>
-              <NetworkBadge />
             </div>
-          </section>
+          </div>
 
-          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              Link Your Social Accounts
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Connect your social media accounts to enable direct token
-              transfers via your social handles.
-            </p>
-            <div className="mt-6">
-              <SocialLinkingForm walletAddress={walletAddress} />
+          {/* Claim Funds */}
+          <div>
+            <div className="group relative overflow-hidden rounded-2xl border border-zinc-200/50 bg-linear-to-br from-white to-zinc-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800/50 dark:from-zinc-900 dark:to-zinc-900/50">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-linear-to-br from-emerald-500/10 to-cyan-500/10 blur-2xl transition-all group-hover:scale-150" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center rounded-xl bg-linear-to-br from-emerald-500/10 to-cyan-500/10 p-3 ring-1 ring-emerald-500/20 dark:ring-emerald-500/30">
+                  <RiCoinsLine className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="mt-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Claim Pending Funds
+                </h3>
+                <div className="mt-4">
+                  <ClaimPendingFunds />
+                </div>
+              </div>
             </div>
-          </section>
+          </div>
 
-          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
-            <ClaimPendingFunds />
-          </section>
-
-          <section className="rounded-2xl border border-zinc-200 bg-white/70 p-8 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 dark:ring-white/5">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-              Lookup Social Links
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Search for social accounts linked to wallets or find wallets by
-              social handles.
-            </p>
-            <div className="mt-6">
-              <SocialLookup />
+          {/* Lookup */}
+          <div className="lg:col-span-1 md:col-span-1">
+            <div className="group relative overflow-hidden rounded-2xl border border-zinc-200/50 bg-linear-to-br from-white to-zinc-50 p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-zinc-800/50 dark:from-zinc-900 dark:to-zinc-900/50">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-linear-to-br from-teal-500/10 to-emerald-500/10 blur-2xl transition-all group-hover:scale-150" />
+              <div className="relative">
+                <div className="inline-flex items-center justify-center rounded-xl bg-linear-to-br from-teal-500/10 to-emerald-500/10 p-3 ring-1 ring-teal-500/20 dark:ring-teal-500/30">
+                  <RiSearchLine className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                </div>
+                <h3 className="mt-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  Lookup Social Links
+                </h3>
+                <div className="mt-4">
+                  <SocialLookup />
+                </div>
+              </div>
             </div>
-          </section>
+          </div>
         </div>
       </main>
     </div>

@@ -90,7 +90,7 @@ export async function initializeProgram(wallet: any) {
   const program = getProgram(wallet);
   const configPDA = getConfigPDA();
 
-  const tx = await program.methods
+  const tx = await (program as any).methods
     .initialize()
     .accounts({
       config: configPDA,
@@ -112,7 +112,7 @@ export async function linkTwitterAccount(
   const configPDA = getConfigPDA();
   const socialLinkPDA = getSocialLinkPDA(userWallet);
 
-  const tx = await program.methods
+  const tx = await (program as any).methods
     .linkTwitter(twitterHandle)
     .accounts({
       socialLink: socialLinkPDA,
@@ -136,7 +136,7 @@ export async function linkInstagramAccount(
   const configPDA = getConfigPDA();
   const socialLinkPDA = getSocialLinkPDA(userWallet);
 
-  const tx = await program.methods
+  const tx = await (program as any).methods
     .linkInstagram(instagramHandle)
     .accounts({
       socialLink: socialLinkPDA,
@@ -160,7 +160,7 @@ export async function linkLinkedinAccount(
   const configPDA = getConfigPDA();
   const socialLinkPDA = getSocialLinkPDA(userWallet);
 
-  const tx = await program.methods
+  const tx = await (program as any).methods
     .linkLinkedin(linkedinHandle)
     .accounts({
       socialLink: socialLinkPDA,

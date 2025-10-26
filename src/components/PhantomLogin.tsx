@@ -13,38 +13,7 @@ type Props = {
   onErrorAction?: (error: Error) => void;
 };
 
-type PhantomPublicKeyLike = {
-  toString(): string;
-};
 
-type PhantomConnectResponse = {
-  publicKey: PhantomPublicKeyLike;
-};
-
-type PhantomSignMessageResponse = {
-  signature: Uint8Array;
-  publicKey?: PhantomPublicKeyLike;
-};
-
-type PhantomProvider = {
-  isPhantom?: boolean;
-  publicKey?: PhantomPublicKeyLike;
-  isConnected?: boolean;
-  connect: (opts?: {
-    onlyIfTrusted?: boolean;
-  }) => Promise<PhantomConnectResponse>;
-  disconnect: () => Promise<void>;
-  signMessage: (
-    message: Uint8Array,
-    display?: "utf8",
-  ) => Promise<PhantomSignMessageResponse>;
-};
-
-declare global {
-  interface Window {
-    solana?: PhantomProvider;
-  }
-}
 
 function getProvider(): PhantomProvider | null {
   if (typeof window === "undefined") return null;
@@ -103,6 +72,7 @@ export default function PhantomLogin({
       if (!provider) throw new Error("Phantom wallet not detected.");
       const bytes = new TextEncoder().encode(message);
       // Phantom supports signMessage(Uint8Array, "utf8") in many versions; fallback to single-arg.
+      if (!provider.signMessage) throw new Error("Provider cannot sign messages");
       try {
         const { signature } = await provider.signMessage(bytes, "utf8");
         return signature;

@@ -2,20 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-// Extend Window interface for Phantom
-interface PhantomWallet {
-  isPhantom?: boolean;
-  publicKey?: { toString: () => string };
-  connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  signAndSendTransaction?: (transaction: any) => Promise<{ signature: string }>;
-  signTransaction?: (transaction: any) => Promise<any>;
-}
 
-declare global {
-  interface Window {
-    solana?: PhantomWallet;
-  }
-}
 
 export default function ClaimPendingFunds() {
   const [publicKey, setPublicKey] = useState<string | null>(null);

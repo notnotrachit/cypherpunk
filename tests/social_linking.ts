@@ -56,7 +56,7 @@ describe("social_linking", () => {
   });
 
   it("Initializes the config", async () => {
-    await program.methods
+    await (program as any).methods
       .initialize()
       .accounts({
         config: configPda,
@@ -65,7 +65,7 @@ describe("social_linking", () => {
       })
       .rpc();
 
-    const config = await program.account.config.fetch(configPda);
+    const config = await (program.account as any).config.fetch(configPda);
     expect(config.admin.toString()).to.equal(provider.wallet.publicKey.toString());
     console.log("✅ Config initialized with admin:", config.admin.toString());
   });
@@ -79,7 +79,7 @@ describe("social_linking", () => {
       program.programId
     );
 
-    await program.methods
+    await (program as any).methods
       .linkTwitter(twitterHandle)
       .accounts({
         socialLink: socialLinkPda,
@@ -90,7 +90,7 @@ describe("social_linking", () => {
       })
       .rpc();
 
-    const socialLink = await program.account.socialLink.fetch(socialLinkPda);
+    const socialLink = await (program.account as any).socialLink.fetch(socialLinkPda);
     expect(socialLink.twitter).to.equal(twitterHandle);
     expect(socialLink.owner.toString()).to.equal(user.publicKey.toString());
     console.log("✅ Twitter linked:", twitterHandle, "to", user.publicKey.toString().slice(0, 8) + "...");
@@ -107,7 +107,7 @@ describe("social_linking", () => {
     );
 
     // Link Instagram
-    await program.methods
+    await (program as any).methods
       .linkInstagram(instagramHandle)
       .accounts({
         socialLink: socialLinkPda,
@@ -119,7 +119,7 @@ describe("social_linking", () => {
       .rpc();
 
     // Link LinkedIn
-    await program.methods
+    await (program as any).methods
       .linkLinkedin(linkedinHandle)
       .accounts({
         socialLink: socialLinkPda,
@@ -130,7 +130,7 @@ describe("social_linking", () => {
       })
       .rpc();
 
-    const socialLink = await program.account.socialLink.fetch(socialLinkPda);
+    const socialLink = await (program.account as any).socialLink.fetch(socialLinkPda);
     expect(socialLink.instagram).to.equal(instagramHandle);
     expect(socialLink.linkedin).to.equal(linkedinHandle);
     console.log("✅ Multiple socials linked to same user");
@@ -146,7 +146,7 @@ describe("social_linking", () => {
       program.programId
     );
 
-    await program.methods
+    await (program as any).methods
       .linkTwitter("@recipient")
       .accounts({
         socialLink: socialLinkPda,
@@ -167,7 +167,7 @@ describe("social_linking", () => {
 
     const amount = 100000000; // 0.1 tokens
 
-    await program.methods
+    await (program as any).methods
       .sendToken(new anchor.BN(amount))
       .accounts({
         sender: sender,
@@ -201,7 +201,7 @@ describe("social_linking", () => {
       true // allowOwnerOffCurve
     );
 
-    await program.methods
+    await (program as any).methods
       .sendTokenToUnlinked(socialHandle, new anchor.BN(amount))
       .accounts({
         sender: provider.wallet.publicKey,
@@ -214,7 +214,7 @@ describe("social_linking", () => {
       })
       .rpc();
 
-    const pendingClaim = await program.account.pendingClaim.fetch(pendingClaimPda);
+    const pendingClaim = await (program.account as any).pendingClaim.fetch(pendingClaimPda);
     expect(pendingClaim.socialHandle).to.equal(socialHandle);
     expect(pendingClaim.amount.toString()).to.equal(amount.toString());
     expect(pendingClaim.claimed).to.be.false;
@@ -240,7 +240,7 @@ describe("social_linking", () => {
       true
     );
 
-    await program.methods
+    await (program as any).methods
       .sendTokenToUnlinked(socialHandle, new anchor.BN(amount))
       .accounts({
         sender: provider.wallet.publicKey,
@@ -259,7 +259,7 @@ describe("social_linking", () => {
       program.programId
     );
 
-    await program.methods
+    await (program as any).methods
       .linkTwitter(socialHandle)
       .accounts({
         socialLink: socialLinkPda,
@@ -279,7 +279,7 @@ describe("social_linking", () => {
     );
 
     // Claim the tokens
-    await program.methods
+    await (program as any).methods
       .claimToken(socialHandle)
       .accounts({
         claimer: claimer.publicKey,
@@ -296,7 +296,7 @@ describe("social_linking", () => {
     const claimerBalance = await getAccount(provider.connection, claimerTokenAccount.address);
     expect(claimerBalance.amount.toString()).to.equal(amount.toString());
 
-    const pendingClaim = await program.account.pendingClaim.fetch(pendingClaimPda);
+    const pendingClaim = await (program.account as any).pendingClaim.fetch(pendingClaimPda);
     expect(pendingClaim.claimed).to.be.true;
     console.log("✅ Claimed", amount / 1e9, "tokens from escrow");
   });
@@ -316,7 +316,7 @@ describe("social_linking", () => {
     );
 
     try {
-      await program.methods
+      await (program as any).methods
         .linkTwitter("@hacker")
         .accounts({
           socialLink: socialLinkPda,

@@ -7,8 +7,8 @@ import {
   TOKEN_PROGRAM_ID
 } from "@solana/spl-token";
 import { getRpcUrl, getProgram } from "@/lib/solana-program";
-import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { BN } from "bn.js";
+import { AnchorProvider } from "@coral-xyz/anchor";
+import BN from "bn.js";
 
 export const dynamic = "force-dynamic";
 
@@ -96,19 +96,18 @@ export async function POST(req: Request) {
 
     // Create a dummy wallet for the provider (we won't use it to sign)
     const dummyKeypair = Keypair.generate();
-    const wallet = new Wallet(dummyKeypair);
-    const provider = new AnchorProvider(connection, wallet, {});
 
-    // Get the program
-    const program = getProgram(provider);
+    // Get the program (getProgram creates its own provider internally)
+    const program = getProgram(dummyKeypair);
 
     // Build the send_token instruction using Anchor
-    const instruction = await program.methods
+    const instruction = await (program as any).methods
       .sendToken(new BN(amountInSmallestUnit))
       .accounts({
         sender: senderPubkey,
         senderTokenAccount: senderTokenAccount,
         recipientTokenAccount: recipientTokenAccount,
+        recipient: recipientPubkey,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction();
@@ -117,12 +116,13 @@ export async function POST(req: Request) {
     const { blockhash } = await connection.getLatestBlockhash();
 
     // Create transaction
-    const transaction = await program.methods
+    const transaction = await (program as any).methods
       .sendToken(new BN(amountInSmallestUnit))
       .accounts({
         sender: senderPubkey,
         senderTokenAccount: senderTokenAccount,
         recipientTokenAccount: recipientTokenAccount,
+        recipient: recipientPubkey,
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .transaction();

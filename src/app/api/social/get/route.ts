@@ -44,7 +44,13 @@ export async function GET(req: Request) {
       linked: true,
       wallet,
       socials: {
-        twitter: socialLink.twitter || null,
+        twitter: socialLink.twitter
+          ? {
+              handle: socialLink.twitter,
+              name: socialLink.twitter,
+              profileImageUrl: socialLink.twitterPic || "",
+            }
+          : null,
       },
     });
   } catch (error: unknown) {

@@ -39,8 +39,9 @@ export async function POST() {
       );
     }
 
-    const { provider, username } = socialSession;
+    const { provider, username, user } = socialSession;
     const handle = username.startsWith("@") ? username : `@${username}`;
+    const profileImageUrl = user?.image ?? "";
 
     // Link to blockchain
     const adminWallet = getAdminWallet();
@@ -49,7 +50,7 @@ export async function POST() {
     let tx: string;
 
     if (provider === "twitter") {
-      tx = await linkTwitterAccount(adminWallet, userWallet, handle);
+      tx = await linkTwitterAccount(adminWallet, userWallet, handle, profileImageUrl);
     } else {
       return NextResponse.json(
         { error: "Unsupported provider" },

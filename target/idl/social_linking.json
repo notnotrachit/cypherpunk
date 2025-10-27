@@ -1,5 +1,5 @@
 {
-  "address": "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9",
+  "address": "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd",
   "metadata": {
     "name": "social_linking",
     "version": "0.1.0",
@@ -413,164 +413,6 @@
       "args": []
     },
     {
-      "name": "link_instagram",
-      "discriminator": [
-        141,
-        203,
-        236,
-        227,
-        231,
-        110,
-        79,
-        149
-      ],
-      "accounts": [
-        {
-          "name": "social_link",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  99,
-                  105,
-                  97,
-                  108,
-                  95,
-                  108,
-                  105,
-                  110,
-                  107
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "user"
-              }
-            ]
-          }
-        },
-        {
-          "name": "user"
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "instagram_handle",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "link_linkedin",
-      "discriminator": [
-        231,
-        147,
-        185,
-        200,
-        116,
-        119,
-        133,
-        125
-      ],
-      "accounts": [
-        {
-          "name": "social_link",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  99,
-                  105,
-                  97,
-                  108,
-                  95,
-                  108,
-                  105,
-                  110,
-                  107
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "user"
-              }
-            ]
-          }
-        },
-        {
-          "name": "user"
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "linkedin_handle",
-          "type": "string"
-        }
-      ]
-    },
-    {
       "name": "link_twitter",
       "discriminator": [
         45,
@@ -645,6 +487,10 @@
       "args": [
         {
           "name": "twitter_handle",
+          "type": "string"
+        },
+        {
+          "name": "twitter_pic",
           "type": "string"
         }
       ]
@@ -1256,6 +1102,11 @@
       "code": 6005,
       "name": "InvalidHandle",
       "msg": "Invalid social handle"
+    },
+    {
+      "code": 6006,
+      "name": "ProfilePicUrlTooLong",
+      "msg": "Profile picture URL is too long"
     }
   ],
   "types": [
@@ -1349,11 +1200,23 @@
             "type": "string"
           },
           {
+            "name": "twitter_pic",
+            "type": "string"
+          },
+          {
             "name": "instagram",
             "type": "string"
           },
           {
+            "name": "instagram_pic",
+            "type": "string"
+          },
+          {
             "name": "linkedin",
+            "type": "string"
+          },
+          {
+            "name": "linkedin_pic",
             "type": "string"
           },
           {

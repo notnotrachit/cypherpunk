@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/social_linking.json`.
  */
 export type SocialLinking = {
-  "address": "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9",
+  "address": "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd",
   "metadata": {
     "name": "socialLinking",
     "version": "0.1.0",
@@ -419,164 +419,6 @@ export type SocialLinking = {
       "args": []
     },
     {
-      "name": "linkInstagram",
-      "discriminator": [
-        141,
-        203,
-        236,
-        227,
-        231,
-        110,
-        79,
-        149
-      ],
-      "accounts": [
-        {
-          "name": "socialLink",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  99,
-                  105,
-                  97,
-                  108,
-                  95,
-                  108,
-                  105,
-                  110,
-                  107
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "user"
-              }
-            ]
-          }
-        },
-        {
-          "name": "user"
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "instagramHandle",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "linkLinkedin",
-      "discriminator": [
-        231,
-        147,
-        185,
-        200,
-        116,
-        119,
-        133,
-        125
-      ],
-      "accounts": [
-        {
-          "name": "socialLink",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  99,
-                  105,
-                  97,
-                  108,
-                  95,
-                  108,
-                  105,
-                  110,
-                  107
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "user"
-              }
-            ]
-          }
-        },
-        {
-          "name": "user"
-        },
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "linkedinHandle",
-          "type": "string"
-        }
-      ]
-    },
-    {
       "name": "linkTwitter",
       "discriminator": [
         45,
@@ -651,6 +493,10 @@ export type SocialLinking = {
       "args": [
         {
           "name": "twitterHandle",
+          "type": "string"
+        },
+        {
+          "name": "twitterPic",
           "type": "string"
         }
       ]
@@ -1262,6 +1108,11 @@ export type SocialLinking = {
       "code": 6005,
       "name": "invalidHandle",
       "msg": "Invalid social handle"
+    },
+    {
+      "code": 6006,
+      "name": "profilePicUrlTooLong",
+      "msg": "Profile picture URL is too long"
     }
   ],
   "types": [
@@ -1355,11 +1206,23 @@ export type SocialLinking = {
             "type": "string"
           },
           {
+            "name": "twitterPic",
+            "type": "string"
+          },
+          {
             "name": "instagram",
             "type": "string"
           },
           {
+            "name": "instagramPic",
+            "type": "string"
+          },
+          {
             "name": "linkedin",
+            "type": "string"
+          },
+          {
+            "name": "linkedinPic",
             "type": "string"
           },
           {

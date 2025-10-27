@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 type LinkSocialRequest = {
   platform: "twitter";
   handle: string;
+  profilePic?: string; // Optional: profile picture URL
   userWallet?: string; // Optional: if linking for another user (admin only)
 };
 
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     const userAddress = payload.sub;
 
     const body: LinkSocialRequest = await req.json();
-    const { platform, handle, userWallet } = body;
+    const { platform, handle, profilePic, userWallet } = body;
 
     if (!platform || !handle) {
       return NextResponse.json(
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
     let tx: string;
     switch (platform) {
       case "twitter":
-        tx = await linkTwitterAccount(adminWallet, targetWallet, handle);
+        tx = await linkTwitterAccount(adminWallet, targetWallet, handle, profilePic || "");
         break;
       default:
         return NextResponse.json(

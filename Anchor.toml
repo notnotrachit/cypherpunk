@@ -5,13 +5,13 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-social_linking = "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9"
+social_linking = "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd"
 
 [programs.devnet]
-social_linking = "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9"
+social_linking = "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd"
 
 [programs.mainnet]
-social_linking = "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9"
+social_linking = "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd"
 
 [registry]
 url = "https://api.apr.dev"

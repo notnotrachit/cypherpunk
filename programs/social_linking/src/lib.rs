@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
-declare_id!("BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9");
+declare_id!("B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd");
 
 #[program]
 pub mod social_linking {
@@ -17,8 +17,10 @@ pub mod social_linking {
     pub fn link_twitter(
         ctx: Context<LinkTwitter>,
         twitter_handle: String,
+        twitter_pic: String,
     ) -> Result<()> {
         require!(twitter_handle.len() <= 30, ErrorCode::HandleTooLong);
+        require!(twitter_pic.len() <= 200, ErrorCode::ProfilePicUrlTooLong);
 
         let social_link = &mut ctx.accounts.social_link;
         if social_link.owner == Pubkey::default() {
@@ -26,6 +28,7 @@ pub mod social_linking {
             social_link.bump = ctx.bumps.social_link;
         }
         social_link.twitter = twitter_handle;
+        social_link.twitter_pic = twitter_pic;
 
         Ok(())
     }
@@ -350,6 +353,16 @@ pub struct SocialLink {
     pub owner: Pubkey,
     #[max_len(30)]
     pub twitter: String,
+    #[max_len(200)]
+    pub twitter_pic: String,
+    #[max_len(30)]
+    pub instagram: String,
+    #[max_len(200)]
+    pub instagram_pic: String,
+    #[max_len(30)]
+    pub linkedin: String,
+    #[max_len(200)]
+    pub linkedin_pic: String,
     pub bump: u8,
 }
 
@@ -390,4 +403,6 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Invalid social handle")]
     InvalidHandle,
+    #[msg("Profile picture URL is too long")]
+    ProfilePicUrlTooLong,
 }

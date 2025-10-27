@@ -20,7 +20,7 @@ async function main() {
   // Load environment variables
   const privateKey = process.env.ADMIN_WALLET_PRIVATE_KEY;
   const rpcUrl = process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
-  const programId = new PublicKey("BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9");
+  const programId = new PublicKey("B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd");
 
   if (!privateKey) {
     console.error("❌ Error: ADMIN_WALLET_PRIVATE_KEY not set in .env file");

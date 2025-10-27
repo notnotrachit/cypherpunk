@@ -16,7 +16,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 export const PROGRAM_ID = new PublicKey(
-  "BCD29c55GrdmwUefJ8ndbp49TuH4h3khj62CrRaD1tx9",
+  "B6Zx3sv8tRUHJq3pzLSfikCd6uEx17ksp6FmyEoeh1Wd",
 );
 
 // RPC URLs
@@ -143,13 +143,14 @@ export async function linkTwitterAccount(
   wallet: Keypair | Wallet,
   userWallet: PublicKey,
   twitterHandle: string,
+  twitterPic: string = "",
 ) {
   const program = getProgram(wallet);
   const configPDA = getConfigPDA();
   const socialLinkPDA = getSocialLinkPDA(userWallet);
 
   const tx = await program.methods
-    .linkTwitter(twitterHandle)
+    .linkTwitter(twitterHandle, twitterPic)
     .accounts({
       socialLink: socialLinkPDA,
       user: userWallet,
@@ -166,6 +167,11 @@ export async function linkTwitterAccount(
 export type SocialLinkAccount = {
   owner: PublicKey;
   twitter: string;
+  twitterPic: string;
+  instagram: string;
+  instagramPic: string;
+  linkedin: string;
+  linkedinPic: string;
   bump: number;
 };
 

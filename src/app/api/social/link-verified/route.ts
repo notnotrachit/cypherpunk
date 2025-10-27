@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
 import { verifySessionJwt } from "@/lib/auth";
-import {
-  linkTwitterAccount,
-  linkInstagramAccount,
-  linkLinkedinAccount,
-} from "@/lib/solana-program";
+import { linkTwitterAccount } from "@/lib/solana-program";
 import { PublicKey } from "@solana/web3.js";
 import { getAdminWallet } from "@/lib/wallet";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -26,7 +22,7 @@ export async function POST() {
     if (!sessionToken) {
       return NextResponse.json(
         { error: "Please login with Phantom wallet first" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -39,7 +35,7 @@ export async function POST() {
     if (!socialSession || !socialSession.provider || !socialSession.username) {
       return NextResponse.json(
         { error: "No social account authenticated" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -54,14 +50,10 @@ export async function POST() {
 
     if (provider === "twitter") {
       tx = await linkTwitterAccount(adminWallet, userWallet, handle);
-    } else if (provider === "facebook") {
-      tx = await linkInstagramAccount(adminWallet, userWallet, handle);
-    } else if (provider === "linkedin") {
-      tx = await linkLinkedinAccount(adminWallet, userWallet, handle);
     } else {
       return NextResponse.json(
         { error: "Unsupported provider" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,11 +64,9 @@ export async function POST() {
       transaction: tx,
       message: `${provider} account linked successfully!`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Link verified error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to link" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Failed to link";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

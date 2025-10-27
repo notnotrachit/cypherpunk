@@ -8,22 +8,21 @@ export const dynamic = "force-dynamic";
  * GET /api/network-info
  */
 export async function GET() {
-    try {
-        const network = getNetworkName();
-        const rpcUrl = getRpcUrl();
-        const programId = PROGRAM_ID.toString();
+  try {
+    const network = getNetworkName();
+    const rpcUrl = getRpcUrl();
+    const programId = PROGRAM_ID.toString();
 
-        return NextResponse.json({
-            network,
-            rpcUrl,
-            programId,
-            explorerUrl: `https://explorer.solana.com/address/${programId}?cluster=${network.toLowerCase()}`,
-        });
-    } catch (error: any) {
-        console.error("Network info error:", error);
-        return NextResponse.json(
-            { error: error.message || "Failed to get network info" },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({
+      network,
+      rpcUrl,
+      programId,
+      explorerUrl: `https://explorer.solana.com/address/${programId}?cluster=${network.toLowerCase()}`,
+    });
+  } catch (error: unknown) {
+    console.error("Network info error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to get network info";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

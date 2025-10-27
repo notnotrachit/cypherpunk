@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
-import {
-  getLinkedInHandle,
-  getTwitterHandle,
-  getInstagramHandle,
-} from "@/lib/solana-program";
+import { getTwitterHandle } from "@/lib/solana-program";
 import { PublicKey } from "@solana/web3.js";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Get a specific social handle for a wallet
- * GET /api/social/get-handle?wallet=<ADDRESS>&platform=linkedin
+ * GET /api/social/get-handle?wallet=<ADDRESS>&platform=twitter
  */
 export async function GET(req: Request) {
   try {
@@ -21,14 +17,14 @@ export async function GET(req: Request) {
     if (!wallet || !platform) {
       return NextResponse.json(
         { error: "Missing required parameters: wallet, platform" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (!["twitter", "instagram", "linkedin"].includes(platform)) {
+    if (platform !== "twitter") {
       return NextResponse.json(
-        { error: "Invalid platform. Must be twitter, instagram, or linkedin" },
-        { status: 400 }
+        { error: "Invalid platform. Must be twitter" },
+        { status: 400 },
       );
     }
 
@@ -38,7 +34,7 @@ export async function GET(req: Request) {
     } catch {
       return NextResponse.json(
         { error: "Invalid wallet address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -47,12 +43,6 @@ export async function GET(req: Request) {
     switch (platform) {
       case "twitter":
         handle = await getTwitterHandle(walletPubkey);
-        break;
-      case "instagram":
-        handle = await getInstagramHandle(walletPubkey);
-        break;
-      case "linkedin":
-        handle = await getLinkedInHandle(walletPubkey);
         break;
     }
 
@@ -71,11 +61,10 @@ export async function GET(req: Request) {
       platform,
       handle,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get handle error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to get handle" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to get handle";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

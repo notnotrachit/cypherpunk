@@ -9,25 +9,25 @@ type LookupResult = {
   platform?: string;
   socials?: {
     twitter: string | null;
-    instagram: string | null;
-    linkedin: string | null;
   };
 };
 
 export default function SocialLookup() {
-  const [activeTab, setActiveTab] = useState<"by-wallet" | "by-handle">("by-wallet");
-  
+  const [activeTab, setActiveTab] = useState<"by-wallet" | "by-handle">(
+    "by-wallet",
+  );
+
   // By Wallet
   const [walletAddress, setWalletAddress] = useState("");
   const [walletResult, setWalletResult] = useState<LookupResult | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
-  
+
   // By Handle
   const [socialHandle, setSocialHandle] = useState("");
-  const [platform, setPlatform] = useState<"twitter" | "instagram" | "linkedin">("twitter");
+  const [platform, setPlatform] = useState<"twitter">("twitter");
   const [handleResult, setHandleResult] = useState<LookupResult | null>(null);
   const [handleLoading, setHandleLoading] = useState(false);
-  
+
   const [error, setError] = useState<string | null>(null);
 
   const searchByWallet = async () => {
@@ -53,8 +53,9 @@ export default function SocialLookup() {
         wallet: data.wallet,
         socials: data.socials,
       });
-    } catch (err: any) {
-      setError(err.message || "Failed to search");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to search";
+      setError(message);
     } finally {
       setWalletLoading(false);
     }
@@ -72,7 +73,7 @@ export default function SocialLookup() {
       setHandleResult(null);
 
       const response = await fetch(
-        `/api/social/find-wallet?handle=${encodeURIComponent(socialHandle)}&platform=${platform}`
+        `/api/social/find-wallet?handle=${encodeURIComponent(socialHandle)}&platform=${platform}`,
       );
       const data = await response.json();
 
@@ -86,8 +87,9 @@ export default function SocialLookup() {
         handle: data.handle,
         platform: data.platform,
       });
-    } catch (err: any) {
-      setError(err.message || "Failed to search");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to search";
+      setError(message);
     } finally {
       setHandleLoading(false);
     }
@@ -172,26 +174,6 @@ export default function SocialLookup() {
                         )}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-700 dark:text-zinc-300 w-24">
-                        Instagram:
-                      </span>
-                      <span className="text-zinc-900 dark:text-zinc-100">
-                        {walletResult.socials?.instagram || (
-                          <span className="text-zinc-400">Not linked</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-700 dark:text-zinc-300 w-24">
-                        LinkedIn:
-                      </span>
-                      <span className="text-zinc-900 dark:text-zinc-100">
-                        {walletResult.socials?.linkedin || (
-                          <span className="text-zinc-400">Not linked</span>
-                        )}
-                      </span>
-                    </div>
                   </div>
                 </div>
               ) : (
@@ -223,26 +205,6 @@ export default function SocialLookup() {
               >
                 Twitter
               </button>
-              <button
-                onClick={() => setPlatform("instagram")}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  platform === "instagram"
-                    ? "bg-violet-600 text-white"
-                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                }`}
-              >
-                Instagram
-              </button>
-              <button
-                onClick={() => setPlatform("linkedin")}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  platform === "linkedin"
-                    ? "bg-violet-600 text-white"
-                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                }`}
-              >
-                LinkedIn
-              </button>
             </div>
           </div>
 
@@ -255,11 +217,7 @@ export default function SocialLookup() {
                 type="text"
                 value={socialHandle}
                 onChange={(e) => setSocialHandle(e.target.value)}
-                placeholder={
-                  platform === "linkedin"
-                    ? "Enter LinkedIn username"
-                    : "Enter handle (e.g., @username)"
-                }
+                placeholder="Enter handle (e.g., @username)"
                 className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
                 onKeyDown={(e) => e.key === "Enter" && searchByHandle()}
               />
@@ -325,8 +283,14 @@ export default function SocialLookup() {
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-200">
         <p className="font-medium mb-2">💡 How to use:</p>
         <ul className="list-inside list-disc space-y-1 text-xs">
-          <li><strong>Search by Wallet:</strong> Find all social accounts linked to a Solana wallet</li>
-          <li><strong>Search by Handle:</strong> Find the Solana wallet linked to a social account</li>
+          <li>
+            <strong>Search by Wallet:</strong> Find all social accounts linked
+            to a Solana wallet
+          </li>
+          <li>
+            <strong>Search by Handle:</strong> Find the Solana wallet linked to
+            a social account
+          </li>
           <li>All data is stored on-chain and publicly queryable</li>
         </ul>
       </div>

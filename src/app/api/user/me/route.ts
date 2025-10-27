@@ -25,10 +25,7 @@ export async function GET() {
       exp: payload.exp,
       iat: payload.iat,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Invalid session" },
-      { status: 401 }
-    );
+  } catch {
+    return NextResponse.json({ error: "Invalid session" }, { status: 401 });
   }
 }

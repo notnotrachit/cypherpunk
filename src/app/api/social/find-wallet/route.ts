@@ -13,30 +13,27 @@ export async function GET(req: Request) {
     const handle = searchParams.get("handle");
     const platform = searchParams.get("platform");
 
-    if (!handle || !platform) {
+    if (!handle) {
       return NextResponse.json(
-        { error: "Missing required parameters: handle, platform" },
-        { status: 400 }
+        { error: "Missing required parameter: handle" },
+        { status: 400 },
       );
     }
 
-    if (!["twitter", "instagram", "linkedin"].includes(platform)) {
+    if (platform && platform !== "twitter") {
       return NextResponse.json(
-        { error: "Invalid platform. Must be twitter, instagram, or linkedin" },
-        { status: 400 }
+        { error: "Invalid platform. Only twitter is supported" },
+        { status: 400 },
       );
     }
 
-    const wallet = await findWalletBySocialHandle(
-      handle,
-      platform as "twitter" | "instagram" | "linkedin"
-    );
+    const wallet = await findWalletBySocialHandle(handle, "twitter");
 
     if (!wallet) {
       return NextResponse.json({
         found: false,
         handle,
-        platform,
+        platform: "twitter",
         wallet: null,
       });
     }
@@ -44,14 +41,13 @@ export async function GET(req: Request) {
     return NextResponse.json({
       found: true,
       handle,
-      platform,
+      platform: "twitter",
       wallet: wallet.toString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Find wallet error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to find wallet" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to find wallet";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

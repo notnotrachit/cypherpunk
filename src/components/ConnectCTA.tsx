@@ -35,6 +35,7 @@ export default function ConnectCTA({
 
   const onAuthenticated = useCallback(
     (_wallet: string) => {
+      void _wallet;
       setOpen(false);
       router.replace("/dashboard");
       router.refresh();

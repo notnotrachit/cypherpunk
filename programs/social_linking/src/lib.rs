@@ -19,48 +19,20 @@ pub mod social_linking {
         twitter_handle: String,
     ) -> Result<()> {
         require!(twitter_handle.len() <= 30, ErrorCode::HandleTooLong);
-        
+
         let social_link = &mut ctx.accounts.social_link;
         if social_link.owner == Pubkey::default() {
             social_link.owner = ctx.accounts.user.key();
             social_link.bump = ctx.bumps.social_link;
         }
         social_link.twitter = twitter_handle;
-        
+
         Ok(())
     }
 
-    pub fn link_instagram(
-        ctx: Context<LinkInstagram>,
-        instagram_handle: String,
-    ) -> Result<()> {
-        require!(instagram_handle.len() <= 30, ErrorCode::HandleTooLong);
-        
-        let social_link = &mut ctx.accounts.social_link;
-        if social_link.owner == Pubkey::default() {
-            social_link.owner = ctx.accounts.user.key();
-            social_link.bump = ctx.bumps.social_link;
-        }
-        social_link.instagram = instagram_handle;
-        
-        Ok(())
-    }
 
-    pub fn link_linkedin(
-        ctx: Context<LinkLinkedin>,
-        linkedin_handle: String,
-    ) -> Result<()> {
-        require!(linkedin_handle.len() <= 30, ErrorCode::HandleTooLong);
-        
-        let social_link = &mut ctx.accounts.social_link;
-        if social_link.owner == Pubkey::default() {
-            social_link.owner = ctx.accounts.user.key();
-            social_link.bump = ctx.bumps.social_link;
-        }
-        social_link.linkedin = linkedin_handle;
-        
-        Ok(())
-    }
+
+
 
     pub fn send_token(
         ctx: Context<SendToken>,
@@ -102,7 +74,7 @@ pub mod social_linking {
 
         // Record or update pending claim
         let pending_claim = &mut ctx.accounts.pending_claim;
-        
+
         // If account was just created or was previously claimed, initialize it
         if pending_claim.claimed || pending_claim.amount == 0 {
             pending_claim.social_handle = social_handle.clone();
@@ -171,15 +143,15 @@ pub mod social_linking {
     ) -> Result<()> {
         // Admin can close old/invalid pending claim accounts
         // This is useful for migration after contract upgrades
-        
+
         // Transfer lamports from pending_claim to admin
         let pending_claim_info = ctx.accounts.pending_claim.to_account_info();
         let admin_info = ctx.accounts.admin.to_account_info();
-        
+
         let lamports = pending_claim_info.lamports();
         **pending_claim_info.try_borrow_mut_lamports()? = 0;
         **admin_info.try_borrow_mut_lamports()? = admin_info.lamports().checked_add(lamports).unwrap();
-        
+
         Ok(())
     }
 }
@@ -194,10 +166,10 @@ pub struct Initialize<'info> {
         bump
     )]
     pub config: Account<'info, Config>,
-    
+
     #[account(mut)]
     pub admin: Signer<'info>,
-    
+
     pub system_program: Program<'info, System>,
 }
 
@@ -211,99 +183,49 @@ pub struct LinkTwitter<'info> {
         bump
     )]
     pub social_link: Account<'info, SocialLink>,
-    
+
     /// CHECK: User wallet to link
     pub user: AccountInfo<'info>,
-    
+
     #[account(mut)]
     pub admin: Signer<'info>,
-    
+
     #[account(
-        seeds = [b"config"], 
+        seeds = [b"config"],
         bump = config.bump,
         constraint = config.admin == admin.key() @ ErrorCode::Unauthorized
     )]
     pub config: Account<'info, Config>,
-    
+
     pub system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-pub struct LinkInstagram<'info> {
-    #[account(
-        init_if_needed,
-        payer = admin,
-        space = 8 + SocialLink::INIT_SPACE,
-        seeds = [b"social_link", user.key().as_ref()],
-        bump
-    )]
-    pub social_link: Account<'info, SocialLink>,
-    
-    /// CHECK: User wallet to link
-    pub user: AccountInfo<'info>,
-    
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    
-    #[account(
-        seeds = [b"config"], 
-        bump = config.bump,
-        constraint = config.admin == admin.key() @ ErrorCode::Unauthorized
-    )]
-    pub config: Account<'info, Config>,
-    
-    pub system_program: Program<'info, System>,
-}
 
-#[derive(Accounts)]
-pub struct LinkLinkedin<'info> {
-    #[account(
-        init_if_needed,
-        payer = admin,
-        space = 8 + SocialLink::INIT_SPACE,
-        seeds = [b"social_link", user.key().as_ref()],
-        bump
-    )]
-    pub social_link: Account<'info, SocialLink>,
-    
-    /// CHECK: User wallet to link
-    pub user: AccountInfo<'info>,
-    
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    
-    #[account(
-        seeds = [b"config"], 
-        bump = config.bump,
-        constraint = config.admin == admin.key() @ ErrorCode::Unauthorized
-    )]
-    pub config: Account<'info, Config>,
-    
-    pub system_program: Program<'info, System>,
-}
+
+
 
 #[derive(Accounts)]
 pub struct SendToken<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
-    
+
     #[account(
         mut,
         associated_token::mint = sender_token_account.mint,
         associated_token::authority = sender
     )]
     pub sender_token_account: Account<'info, TokenAccount>,
-    
+
     #[account(
         mut,
         associated_token::mint = sender_token_account.mint,
         associated_token::authority = recipient
     )]
     pub recipient_token_account: Account<'info, TokenAccount>,
-    
+
     /// CHECK: Recipient wallet address
     pub recipient: AccountInfo<'info>,
-    
+
     pub token_program: Program<'info, Token>,
 }
 
@@ -312,21 +234,21 @@ pub struct SendToken<'info> {
 pub struct SendTokenToUnlinked<'info> {
     #[account(mut)]
     pub sender: Signer<'info>,
-    
+
     #[account(
         mut,
         associated_token::mint = sender_token_account.mint,
         associated_token::authority = sender
     )]
     pub sender_token_account: Account<'info, TokenAccount>,
-    
+
     #[account(
         mut,
         associated_token::mint = sender_token_account.mint,
         associated_token::authority = config
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
-    
+
     #[account(
         init_if_needed,
         payer = sender,
@@ -335,7 +257,7 @@ pub struct SendTokenToUnlinked<'info> {
         bump
     )]
     pub pending_claim: Account<'info, PendingClaim>,
-    
+
     #[account(
         init,
         payer = sender,
@@ -344,10 +266,10 @@ pub struct SendTokenToUnlinked<'info> {
         bump
     )]
     pub payment_record: Account<'info, PaymentRecord>,
-    
+
     #[account(seeds = [b"config"], bump = config.bump)]
     pub config: Account<'info, Config>,
-    
+
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -357,16 +279,14 @@ pub struct SendTokenToUnlinked<'info> {
 pub struct ClaimToken<'info> {
     #[account(mut)]
     pub claimer: Signer<'info>,
-    
+
     #[account(
         seeds = [b"social_link", claimer.key().as_ref()],
         bump = social_link.bump,
-        constraint = social_link.twitter == social_handle || 
-                     social_link.instagram == social_handle || 
-                     social_link.linkedin == social_handle @ ErrorCode::NotLinked
+        constraint = social_link.twitter == social_handle @ ErrorCode::NotLinked
     )]
     pub social_link: Account<'info, SocialLink>,
-    
+
     #[account(
         mut,
         seeds = [b"pending_claim", social_handle.as_bytes()],
@@ -374,24 +294,24 @@ pub struct ClaimToken<'info> {
         constraint = !pending_claim.claimed @ ErrorCode::AlreadyClaimed
     )]
     pub pending_claim: Account<'info, PendingClaim>,
-    
+
     #[account(
         mut,
         associated_token::mint = escrow_token_account.mint,
         associated_token::authority = config
     )]
     pub escrow_token_account: Account<'info, TokenAccount>,
-    
+
     #[account(
         mut,
         associated_token::mint = escrow_token_account.mint,
         associated_token::authority = claimer
     )]
     pub claimer_token_account: Account<'info, TokenAccount>,
-    
+
     #[account(seeds = [b"config"], bump = config.bump)]
     pub config: Account<'info, Config>,
-    
+
     pub token_program: Program<'info, Token>,
 }
 
@@ -400,14 +320,14 @@ pub struct ClaimToken<'info> {
 pub struct ClosePendingClaim<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
-    
+
     #[account(
-        seeds = [b"config"], 
+        seeds = [b"config"],
         bump = config.bump,
         constraint = config.admin == admin.key() @ ErrorCode::Unauthorized
     )]
     pub config: Account<'info, Config>,
-    
+
     /// CHECK: We use UncheckedAccount because the account might have old structure
     #[account(
         mut,
@@ -430,10 +350,6 @@ pub struct SocialLink {
     pub owner: Pubkey,
     #[max_len(30)]
     pub twitter: String,
-    #[max_len(30)]
-    pub instagram: String,
-    #[max_len(30)]
-    pub linkedin: String,
     pub bump: u8,
 }
 

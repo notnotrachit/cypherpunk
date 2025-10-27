@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { signIn, useSession, signOut } from "next-auth/react";
 
 type SocialLinks = {
   twitter: string | null;
-  instagram: string | null;
-  linkedin: string | null;
 };
 
 type Props = {
@@ -22,28 +20,7 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
   const { data: session, status } = useSession();
   const linkedSessionRef = useRef<string | null>(null); // Track which session we've already linked
 
-  useEffect(() => {
-    fetchSocialLinks();
-  }, [walletAddress]);
-
-  // Auto-link when returning from OAuth
-  useEffect(() => {
-    const sessionId = session?.provider
-      ? `${session.provider}-${session.username}`
-      : null;
-
-    // Only link if we have a session, it's authenticated, and we haven't linked this exact session yet
-    if (
-      session &&
-      status === "authenticated" &&
-      sessionId &&
-      linkedSessionRef.current !== sessionId
-    ) {
-      linkToBlockchain();
-    }
-  }, [session, status]);
-
-  const fetchSocialLinks = async () => {
+  const fetchSocialLinks = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/social/get?wallet=${walletAddress}`);
@@ -57,9 +34,9 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [walletAddress]);
 
-  const linkToBlockchain = async () => {
+  const linkToBlockchain = useCallback(async () => {
     if (!session || linking) return;
 
     const sessionId = `${session.provider}-${session.username}`;
@@ -80,7 +57,7 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       }
 
       setSuccess(
-        `${session.provider} account (${session.username}) linked successfully!`
+        `${session.provider} account (${session.username}) linked successfully!`,
       );
       await fetchSocialLinks();
 
@@ -90,22 +67,47 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
         setSuccess(null);
         // linkedSessionRef stays set to prevent re-linking the same account immediately
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || "Failed to link account");
+    } catch (err: unknown) {
+      setError(
+        (err instanceof Error && err.message) || "Failed to link account",
+      );
     } finally {
       setLinking(false);
     }
-  };
+  }, [session, linking, fetchSocialLinks]);
 
-  const linkSocial = async (provider: "twitter" | "facebook" | "linkedin") => {
+  useEffect(() => {
+    fetchSocialLinks();
+  }, [fetchSocialLinks]);
+
+  // Auto-link when returning from OAuth
+  useEffect(() => {
+    const sessionId = session?.provider
+      ? `${session.provider}-${session.username}`
+      : null;
+
+    // Only link if we have a session, it's authenticated, and we haven't linked this exact session yet
+    if (
+      session &&
+      status === "authenticated" &&
+      sessionId &&
+      linkedSessionRef.current !== sessionId
+    ) {
+      linkToBlockchain();
+    }
+  }, [session, status, linkToBlockchain]);
+
+  const linkSocial = async (provider: "twitter") => {
     setError(null);
     setSuccess(null);
 
     try {
       // Trigger OAuth - will redirect to provider and back
       await signIn(provider, { callbackUrl: "/dashboard" });
-    } catch (err: any) {
-      setError(err.message || "Failed to start OAuth");
+    } catch (err: unknown) {
+      setError(
+        (err instanceof Error && err.message) || "Failed to start OAuth",
+      );
     }
   };
 
@@ -162,63 +164,13 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
             {linking
               ? "Linking..."
               : socials?.twitter
-              ? "Update Twitter"
-              : "Link with Twitter"}
+                ? "Update Twitter"
+                : "Link with Twitter"}
           </button>
         </div>
         {socials?.twitter && (
           <p className="text-xs text-green-600 dark:text-green-400">
             ✓ Linked: {socials.twitter}
-          </p>
-        )}
-      </div>
-
-      {/* Instagram */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Instagram Account
-        </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => linkSocial("facebook")}
-            disabled={linking}
-            className="flex-1 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {linking
-              ? "Linking..."
-              : socials?.instagram
-              ? "Update Instagram"
-              : "Link with Instagram"}
-          </button>
-        </div>
-        {socials?.instagram && (
-          <p className="text-xs text-green-600 dark:text-green-400">
-            ✓ Linked: {socials.instagram}
-          </p>
-        )}
-      </div>
-
-      {/* LinkedIn */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          LinkedIn Account
-        </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() => linkSocial("linkedin")}
-            disabled={linking}
-            className="flex-1 rounded-lg bg-[#0A66C2] px-6 py-3 text-sm font-medium text-white hover:bg-[#004182] disabled:opacity-50 transition-colors"
-          >
-            {linking
-              ? "Linking..."
-              : socials?.linkedin
-              ? "Update LinkedIn"
-              : "Link with LinkedIn"}
-          </button>
-        </div>
-        {socials?.linkedin && (
-          <p className="text-xs text-green-600 dark:text-green-400">
-            ✓ Linked: {socials.linkedin}
           </p>
         )}
       </div>

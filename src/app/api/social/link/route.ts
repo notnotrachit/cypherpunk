@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionJwt } from "@/lib/auth";
-import {
-  linkTwitterAccount,
-  linkInstagramAccount,
-  linkLinkedinAccount,
-} from "@/lib/solana-program";
+import { linkTwitterAccount } from "@/lib/solana-program";
 import { PublicKey } from "@solana/web3.js";
 import { getAdminWallet } from "@/lib/wallet";
 
 export const dynamic = "force-dynamic";
 
 type LinkSocialRequest = {
-  platform: "twitter" | "instagram" | "linkedin";
+  platform: "twitter";
   handle: string;
   userWallet?: string; // Optional: if linking for another user (admin only)
 };
@@ -20,8 +16,8 @@ type LinkSocialRequest = {
 /**
  * Link a social account to a wallet
  * POST /api/social/link
- * 
- * Body: { platform: "twitter" | "instagram" | "linkedin", handle: string, userWallet?: string }
+ *
+ * Body: { platform: "twitter", handle: string, userWallet?: string }
  */
 export async function POST(req: Request) {
   try {
@@ -41,14 +37,14 @@ export async function POST(req: Request) {
     if (!platform || !handle) {
       return NextResponse.json(
         { error: "Missing required fields: platform, handle" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    if (!["twitter", "instagram", "linkedin"].includes(platform)) {
+    if (platform !== "twitter") {
       return NextResponse.json(
-        { error: "Invalid platform. Must be twitter, instagram, or linkedin" },
-        { status: 400 }
+        { error: "Invalid platform. Must be twitter" },
+        { status: 400 },
       );
     }
 
@@ -68,14 +64,11 @@ export async function POST(req: Request) {
       case "twitter":
         tx = await linkTwitterAccount(adminWallet, targetWallet, handle);
         break;
-      case "instagram":
-        tx = await linkInstagramAccount(adminWallet, targetWallet, handle);
-        break;
-      case "linkedin":
-        tx = await linkLinkedinAccount(adminWallet, targetWallet, handle);
-        break;
       default:
-        return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid platform" },
+          { status: 400 },
+        );
     }
 
     return NextResponse.json({
@@ -86,11 +79,10 @@ export async function POST(req: Request) {
       wallet: targetWallet.toString(),
       message: `${platform} account linked successfully`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Link social error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to link social account" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to link social account";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

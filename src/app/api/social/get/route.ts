@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     if (!wallet) {
       return NextResponse.json(
         { error: "Missing wallet parameter" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     } catch {
       return NextResponse.json(
         { error: "Invalid wallet address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,15 +45,12 @@ export async function GET(req: Request) {
       wallet,
       socials: {
         twitter: socialLink.twitter || null,
-        instagram: socialLink.instagram || null,
-        linkedin: socialLink.linkedin || null,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Get social links error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch social links" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch social links";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

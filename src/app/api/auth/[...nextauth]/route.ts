@@ -1,7 +1,5 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import TwitterProvider from "next-auth/providers/twitter";
-import FacebookProvider from "next-auth/providers/facebook";
-import LinkedInProvider from "next-auth/providers/linkedin";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -18,41 +16,6 @@ export const authOptions: AuthOptions = {
         };
       },
     }),
-    FacebookProvider({
-      clientId: process.env.INSTAGRAM_CLIENT_ID!,
-      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.id,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture?.data?.url,
-        };
-      },
-    }),
-    LinkedInProvider({
-      clientId: process.env.LINKEDIN_CLIENT_ID!,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          scope: "openid profile email",
-        },
-      },
-      wellKnown:
-        "https://www.linkedin.com/oauth/.well-known/openid-configuration",
-      checks: ["state"],
-      client: {
-        token_endpoint_auth_method: "client_secret_post",
-      },
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-        };
-      },
-    }),
   ],
   pages: {
     signIn: "/dashboard", // Redirect to dashboard instead of default sign-in page
@@ -66,43 +29,44 @@ export const authOptions: AuthOptions = {
         // Debug: Log profile data
         console.log(`[NextAuth] ${account.provider} profile:`, profile);
 
-        // Extract username/identifier from profile
-        let username =
-          (profile as any)?.data?.username || // Twitter v2
-          (profile as any)?.username || // Twitter v1/other
-          (profile as any)?.login ||
-          (profile as any)?.screen_name ||
-          (profile as any)?.name ||
-          (profile as any)?.email?.split("@")[0];
+        // Extract username from typed Twitter profile
+        type TwitterOAuthProfile = {
+          data?: {
+            username?: string;
+            name?: string;
+            email?: string;
+          };
+          username?: string;
+          login?: string;
+          screen_name?: string;
+          name?: string;
+          email?: string;
+        };
 
-        // Twitter specific: use username from data object (v2.0 API)
-        if (account.provider === "twitter") {
+        const isTwitterOAuthProfile = (p: unknown): p is TwitterOAuthProfile =>
+          typeof p === "object" && p !== null;
+
+        let username: string | undefined;
+
+        if (account.provider === "twitter" && isTwitterOAuthProfile(profile)) {
           username =
-            (profile as any)?.data?.username ||
-            (profile as any)?.username ||
-            (profile as any)?.data?.name ||
-            (profile as any)?.name;
+            profile.data?.username ||
+            profile.username ||
+            profile.login ||
+            profile.screen_name ||
+            profile.name ||
+            profile.email?.split("@")[0] ||
+            undefined;
         }
 
-        // Facebook/Instagram specific: use name or email prefix
-        if (account.provider === "facebook") {
-          username =
-            (profile as any)?.username ||
-            (profile as any)?.name?.toLowerCase().replace(/\s+/g, ".") ||
-            (profile as any)?.email?.split("@")[0] ||
-            (profile as any)?.id;
+        // Fallback to existing token value if present
+        if (!username && typeof token.username === "string") {
+          username = token.username;
         }
 
-        // LinkedIn specific: use email prefix or formatted name
-        if (account.provider === "linkedin") {
-          const emailPrefix = (profile as any)?.email?.split("@")[0];
-          const formattedName = (profile as any)?.name
-            ?.toLowerCase()
-            .replace(/\s+/g, "-");
-          username = emailPrefix || formattedName || (profile as any)?.sub;
+        if (username) {
+          token.username = username;
         }
-
-        token.username = username;
         console.log(`[NextAuth] Extracted username: ${username}`);
       }
       return token;
@@ -112,7 +76,7 @@ export const authOptions: AuthOptions = {
       session.username = token.username as string;
       return session;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ baseUrl }) {
       // Always redirect back to dashboard after OAuth
       return `${baseUrl}/dashboard`;
     },

@@ -18,35 +18,19 @@ type Props = {
   iconSrc?: string;
 };
 
-function shortAddress(addr: string | null | undefined, chars = 4) {
-  if (!addr) return "";
-  if (addr.length <= chars * 2 + 3) return addr;
-  return `${addr.slice(0, chars)}…${addr.slice(-chars)}`;
-}
-
-export default function Navbar({
-  className,
-  address,
-  showLogout = true,
-  onLogoutAction,
-  iconSrc = "/phantom.svg",
-}: Props) {
+export default function Navbar({ className, address, onLogoutAction }: Props) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   // Connect modal state
   const [openConnect, setOpenConnect] = useState(false);
   const openConnectModal = useCallback(() => setOpenConnect(true), []);
   const closeConnectModal = useCallback(() => setOpenConnect(false), []);
-  const onAuthenticated = useCallback(
-    (_: string) => {
-      setOpenConnect(false);
-      router.replace("/dashboard");
-      router.refresh();
-    },
-    [router],
-  );
+  const onAuthenticated = useCallback(() => {
+    setOpenConnect(false);
+    router.replace("/dashboard");
+    router.refresh();
+  }, [router]);
 
   const onLogout = useCallback(async () => {
     if (loggingOut) return;

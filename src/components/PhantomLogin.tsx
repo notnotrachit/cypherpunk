@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import bs58 from "bs58";
 import { RiWallet3Line } from "react-icons/ri";
 import { CgSpinner } from "react-icons/cg";
@@ -13,18 +13,11 @@ type Props = {
   onErrorAction?: (error: Error) => void;
 };
 
-
-
 function getProvider(): PhantomProvider | null {
   if (typeof window === "undefined") return null;
   const anyWindow = window as Window;
   if (anyWindow?.solana?.isPhantom) return anyWindow.solana!;
   return null;
-}
-
-function shortAddress(addr: string, chars = 4) {
-  if (addr.length <= chars * 2 + 3) return addr;
-  return `${addr.slice(0, chars)}…${addr.slice(-chars)}`;
 }
 
 export default function PhantomLogin({
@@ -34,27 +27,16 @@ export default function PhantomLogin({
   onAuthenticatedAction,
   onErrorAction,
 }: Props) {
-  const provider = useMemo(getProvider, []);
-  const [address, setAddress] = useState<string | null>(null);
+  const provider = useMemo(() => getProvider(), []);
+  const [address, setAddress] = useState<string | null>(
+    () => provider?.publicKey?.toString() ?? null,
+  );
   const [connecting, setConnecting] = useState(false);
   const [signing, setSigning] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const installed = !!provider;
-
-  useEffect(() => {
-    // Attempt to hydrate current address if already connected
-    if (!provider) return;
-    if (provider.publicKey) {
-      try {
-        const a = provider.publicKey.toString();
-        if (a) setAddress(a);
-      } catch {
-        // ignore
-      }
-    }
-  }, [provider]);
 
   const clearErrors = () => setError(null);
 
@@ -72,7 +54,8 @@ export default function PhantomLogin({
       if (!provider) throw new Error("Phantom wallet not detected.");
       const bytes = new TextEncoder().encode(message);
       // Phantom supports signMessage(Uint8Array, "utf8") in many versions; fallback to single-arg.
-      if (!provider.signMessage) throw new Error("Provider cannot sign messages");
+      if (!provider.signMessage)
+        throw new Error("Provider cannot sign messages");
       try {
         const { signature } = await provider.signMessage(bytes, "utf8");
         return signature;
@@ -188,19 +171,6 @@ export default function PhantomLogin({
     signMessageWithWallet,
     verifySignature,
   ]);
-
-  const handleDisconnect = useCallback(async () => {
-    clearErrors();
-    try {
-      if (provider?.disconnect) {
-        await provider.disconnect();
-      }
-    } catch {
-      // ignore provider disconnect errors
-    } finally {
-      setAddress(null);
-    }
-  }, [provider]);
 
   const busy = connecting || signing || verifying;
 

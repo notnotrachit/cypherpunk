@@ -2,16 +2,64 @@
 
 import { useState, useEffect } from "react";
 
+interface PendingClaim {
+  amount: number;
+  handle: string;
+  paymentCount: number;
+  sender: string;
+}
 
+interface Payment {
+  sender: string;
+  timestamp: number; // seconds since epoch
+}
+
+interface PaymentHistory {
+  payments: Payment[];
+}
+
+interface PendingClaimsResponse {
+  claims: PendingClaim[];
+  error?: string;
+}
+
+interface BuildClaimResponse {
+  transaction: string; // base58-encoded transaction bytes
+  amount: number; // in micro units (e.g., 1e6 = 1 USDC)
+  error?: string;
+}
+
+interface PhantomTransactionLike {
+  serialize(): Uint8Array;
+  serializeMessage(): Uint8Array;
+}
+
+interface PhantomSignAndSendResult {
+  signature: string;
+}
+
+interface PhantomProviderLike {
+  isPhantom: boolean;
+  signAndSendTransaction(
+    tx: PhantomTransactionLike,
+  ): Promise<PhantomSignAndSendResult>;
+}
+
+type WindowWithSolana = Window & {
+  solana?: PhantomProviderLike;
+  lastClaimSignature?: string;
+};
 
 export default function ClaimPendingFunds() {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [pendingClaims, setPendingClaims] = useState<any[]>([]);
+  const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>([]);
   const [checking, setChecking] = useState(false);
-  const [paymentHistory, setPaymentHistory] = useState<any>(null);
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistory | null>(
+    null,
+  );
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [expandedClaim, setExpandedClaim] = useState<string | null>(null);
 
@@ -19,7 +67,7 @@ export default function ClaimPendingFunds() {
     // Get user info
     fetch("/api/user/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+      .then((data: { wallet?: string } | null) => {
         if (data?.wallet) {
           setPublicKey(data.wallet);
         }
@@ -42,20 +90,22 @@ export default function ClaimPendingFunds() {
         credentials: "include",
       });
 
+      const data: PendingClaimsResponse = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to check pending claims');
+        throw new Error(data.error || "Failed to check pending claims");
       }
 
-      const data = await response.json();
       setPendingClaims(data.claims || []);
 
-      if (data.claims.length === 0) {
+      if (!data.claims || data.claims.length === 0) {
         setError("No pending claims found");
       }
-    } catch (err: any) {
-      console.error('Error checking pending claims:', err);
-      setError(err.message || 'Failed to check pending claims');
+    } catch (err: unknown) {
+      console.error("Error checking pending claims:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to check pending claims";
+      setError(message);
     } finally {
       setChecking(false);
     }
@@ -75,12 +125,14 @@ export default function ClaimPendingFunds() {
         throw new Error("Failed to load payment history");
       }
 
-      const data = await response.json();
+      const data: PaymentHistory = await response.json();
       setPaymentHistory(data);
       setExpandedClaim(handle);
-    } catch (err: any) {
-      console.error('Error loading payment history:', err);
-      setError(err.message || 'Failed to load payment history');
+    } catch (err: unknown) {
+      console.error("Error loading payment history:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to load payment history";
+      setError(message);
     } finally {
       setLoadingHistory(false);
     }
@@ -98,7 +150,8 @@ export default function ClaimPendingFunds() {
 
     try {
       // Check if Phantom is available
-      if (!window.solana || !window.solana.isPhantom) {
+      const provider = (window as WindowWithSolana).solana;
+      if (!provider || !provider.isPhantom) {
         throw new Error("Phantom wallet not found. Please install Phantom.");
       }
 
@@ -112,12 +165,13 @@ export default function ClaimPendingFunds() {
         body: JSON.stringify({ socialHandle: handle }),
       });
 
+      const buildData: BuildClaimResponse = await buildResponse.json();
+
       if (!buildResponse.ok) {
-        const data = await buildResponse.json();
-        throw new Error(data.error || 'Failed to build claim transaction');
+        throw new Error(buildData.error || "Failed to build claim transaction");
       }
 
-      const { transaction: transactionBase58, amount } = await buildResponse.json();
+      const { transaction: transactionBase58, amount } = buildData;
 
       // Decode base58 transaction
       const decodeBase58 = (str: string) => {
@@ -128,7 +182,7 @@ export default function ClaimPendingFunds() {
           ALPHABET_MAP[ALPHABET[i]] = i;
         }
 
-        let bytes = [0];
+        const bytes = [0];
         for (let i = 0; i < str.length; i++) {
           const c = str[i];
           if (!(c in ALPHABET_MAP)) throw new Error("Invalid base58 character");
@@ -157,25 +211,27 @@ export default function ClaimPendingFunds() {
       const transactionBytes = decodeBase58(transactionBase58);
 
       // Create a transaction-like object for Phantom
-      const transaction = {
+      const transaction: PhantomTransactionLike = {
         serialize: () => transactionBytes,
         serializeMessage: () => transactionBytes,
       };
 
       // Sign and send with Phantom
-      const result = await (window.solana as any).signAndSendTransaction(transaction);
+      const result = await provider.signAndSendTransaction(transaction);
       const signature = result.signature;
 
       setSuccess(`Successfully claimed ${amount / 1_000_000} USDC!`);
-      
+
       // Store signature for the link
-      (window as any).lastClaimSignature = signature;
-      
+      (window as WindowWithSolana).lastClaimSignature = signature;
+
       // Refresh pending claims
       setTimeout(() => checkPendingClaims(), 2000);
-    } catch (err: any) {
-      console.error('Error claiming funds:', err);
-      setError(err.message || 'Failed to claim funds');
+    } catch (err: unknown) {
+      console.error("Error claiming funds:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to claim funds";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -215,11 +271,11 @@ export default function ClaimPendingFunds() {
         <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
           <p className="text-sm text-green-800 dark:text-green-200">
             {success}
-            {(window as any).lastClaimSignature && (
+            {(window as WindowWithSolana).lastClaimSignature && (
               <>
                 {" "}
                 <a
-                  href={`https://explorer.solana.com/tx/${(window as any).lastClaimSignature}?cluster=devnet`}
+                  href={`https://explorer.solana.com/tx/${(window as WindowWithSolana).lastClaimSignature}?cluster=devnet`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-semibold underline hover:no-underline"
@@ -309,37 +365,26 @@ export default function ClaimPendingFunds() {
                     )
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {paymentHistory.payments.map((payment: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between text-xs p-2 rounded bg-zinc-50 dark:bg-zinc-800"
-                      >
-                        <div className="flex-1">
-                          <p className="font-mono text-zinc-900 dark:text-zinc-100">
-                            {payment.sender.slice(0, 8)}...
-                            {payment.sender.slice(-8)}
-                          </p>
-                          <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">
-                            {new Date(
-                              payment.timestamp * 1000,
-                            ).toLocaleString()}
-                          </p>
+                    {paymentHistory.payments.map(
+                      (payment: Payment, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-xs p-2 rounded bg-zinc-50 dark:bg-zinc-800"
+                        >
+                          <div className="flex-1">
+                            <p className="font-mono text-zinc-900 dark:text-zinc-100">
+                              {payment.sender.slice(0, 8)}...
+                              {payment.sender.slice(-8)}
+                            </p>
+                            <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">
+                              {new Date(
+                                payment.timestamp * 1000,
+                              ).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                            {payment.amount.toFixed(2)} USDC
-                          </p>
-                          <a
-                            href={`https://explorer.solana.com/address/${payment.pda}?cluster=devnet`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 underline text-xs"
-                          >
-                            View account
-                          </a>
-                        </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                   {paymentHistory.payments.length === 0 && (
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4">

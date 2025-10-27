@@ -6,7 +6,6 @@
   width: 22px !important;
   height: 22px !important;
   padding: 0 !important;
-  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%) !important;
   border: none !important;
   border-radius: 50% !important;
   cursor: pointer !important;
@@ -14,12 +13,30 @@
   margin-left: 4px !important;
   flex-shrink: 0 !important;
   position: relative !important;
+}
+
+/* Linked wallet badge (green gradient) */
+.cypherpunk-solana-badge.cypherpunk-linked {
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%) !important;
   box-shadow: 0 2px 8px rgba(153, 69, 255, 0.4) !important;
+}
+
+.cypherpunk-solana-badge.cypherpunk-linked:hover {
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.6) !important;
+}
+
+/* Unlinked wallet badge (orange/amber gradient) */
+.cypherpunk-solana-badge.cypherpunk-unlinked {
+  background: linear-gradient(135deg, #FF8C00 0%, #FFB347 100%) !important;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.4) !important;
+}
+
+.cypherpunk-solana-badge.cypherpunk-unlinked:hover {
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.6) !important;
 }
 
 .cypherpunk-solana-badge:hover {
   transform: scale(1.1) !important;
-  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.6) !important;
 }
 
 .cypherpunk-solana-badge:active {

@@ -125,11 +125,18 @@ async function processCurrentPage() {
 function extractTwitterHandle() {
   console.log('🔎 Extracting Twitter handle...');
 
-  // Try multiple selectors for Twitter/X
+  // First try: extract from URL (most reliable for profile pages)
+  const match = window.location.pathname.match(/^\/([^\/]+)/);
+  if (match && match[1] !== 'home' && match[1] !== 'explore' && match[1] !== 'notifications' && match[1] !== 'search') {
+    const handle = '@' + match[1];
+    console.log('  ✅ Extracted from URL:', handle);
+    return handle;
+  }
+
+  // Fallback: Try specific selectors for the profile header
   const selectors = [
-    '[data-testid="UserName"]',
-    '[data-testid="UserProfileHeader_Items"]',
-    'div[dir="ltr"] span'
+    '[data-testid="UserName"] span:first-child', // More specific selector for the actual username
+    '[data-testid="UserProfileHeader_Items"] span[dir="ltr"]' // Profile header username
   ];
 
   for (const selector of selectors) {
@@ -138,19 +145,11 @@ function extractTwitterHandle() {
 
     for (const el of elements) {
       const text = el.textContent;
-      if (text && text.startsWith('@')) {
+      if (text && text.startsWith('@') && !text.includes(' ') && text.length > 1) {
         console.log('  ✅ Found handle in element:', text.trim());
         return text.trim();
       }
     }
-  }
-
-  // Fallback: extract from URL
-  const match = window.location.pathname.match(/^\/([^\/]+)/);
-  if (match && match[1] !== 'home' && match[1] !== 'explore' && match[1] !== 'notifications') {
-    const handle = '@' + match[1];
-    console.log('  ✅ Extracted from URL:', handle);
-    return handle;
   }
 
   console.log('  ❌ Could not extract handle');
@@ -225,7 +224,7 @@ function addSolanaButton(handle, walletAddress) {
   // Create Solana badge (smaller, icon-only for inline display)
   const badge = document.createElement('button');
   badge.id = 'cypherpunk-solana-btn';
-  badge.className = 'cypherpunk-solana-badge';
+  badge.className = walletAddress ? 'cypherpunk-solana-badge cypherpunk-linked' : 'cypherpunk-solana-badge cypherpunk-unlinked';
   badge.setAttribute('aria-label', walletAddress ? 'Pay with Solana' : 'Send USDC (Claimable)');
   badge.setAttribute('type', 'button');
   badge.setAttribute('title', walletAddress ? 'Pay with Solana' : 'Send USDC - User can claim when they link wallet');
@@ -282,7 +281,7 @@ function openPaymentModal(handle, walletAddress) {
       <div class="cypherpunk-label">Wallet Address</div>
       <div class="cypherpunk-wallet-address">
         ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}
-        <button class="cypherpunk-copy-btn" onclick="navigator.clipboard.writeText('${walletAddress}')">
+        <button class="cypherpunk-copy-btn" data-wallet="${walletAddress}">
           📋
         </button>
       </div>
@@ -300,7 +299,7 @@ function openPaymentModal(handle, walletAddress) {
     <div class="cypherpunk-modal">
       <div class="cypherpunk-modal-header">
         <h2>${modalTitle}</h2>
-        <button class="cypherpunk-modal-close" onclick="this.closest('.cypherpunk-modal-overlay').remove()">×</button>
+        <button class="cypherpunk-modal-close">×</button>
       </div>
       
       <div class="cypherpunk-modal-body">
@@ -330,7 +329,7 @@ function openPaymentModal(handle, walletAddress) {
       </div>
       
       <div class="cypherpunk-modal-footer">
-        <button class="cypherpunk-btn-secondary" onclick="this.closest('.cypherpunk-modal-overlay').remove()">
+        <button class="cypherpunk-btn-secondary" id="cancel-btn">
           Cancel
         </button>
         <button class="cypherpunk-btn-primary" id="send-usdc-btn">
@@ -341,6 +340,36 @@ function openPaymentModal(handle, walletAddress) {
   `;
 
   document.body.appendChild(modal);
+
+  // Add event listener for close button
+  const closeBtn = modal.querySelector('.cypherpunk-modal-close');
+  closeBtn.addEventListener('click', () => {
+    modal.remove();
+  });
+
+  // Add event listener for cancel button
+  const cancelBtn = modal.querySelector('#cancel-btn');
+  cancelBtn.addEventListener('click', () => {
+    modal.remove();
+  });
+
+  // Add event listener for copy button (if wallet is linked)
+  if (isLinked) {
+    const copyBtn = modal.querySelector('.cypherpunk-copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const walletToCopy = copyBtn.getAttribute('data-wallet');
+        navigator.clipboard.writeText(walletToCopy).then(() => {
+          copyBtn.textContent = '✓';
+          setTimeout(() => {
+            copyBtn.textContent = '📋';
+          }, 1000);
+        }).catch(err => {
+          console.error('Failed to copy wallet address:', err);
+        });
+      });
+    }
+  }
 
   // Add event listener for send button
   document.getElementById('send-usdc-btn').addEventListener('click', () => {

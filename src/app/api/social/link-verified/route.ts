@@ -6,7 +6,6 @@ import { linkTwitterAccount } from "@/lib/solana-program";
 import { PublicKey } from "@solana/web3.js";
 import { getAdminWallet } from "@/lib/wallet";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import clientPromise from "@/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
@@ -40,10 +39,8 @@ export async function POST() {
       );
     }
 
-    const { provider, username, user } = socialSession;
+    const { provider, username } = socialSession;
     const handle = username.startsWith("@") ? username : `@${username}`;
-    const name = user?.name ?? handle;
-    const profileImageUrl = user?.image ?? "";
 
     // Link to blockchain
     const adminWallet = getAdminWallet();
@@ -52,29 +49,7 @@ export async function POST() {
     let tx: string;
 
     if (provider === "twitter") {
-      // 1. Link the handle on-chain
       tx = await linkTwitterAccount(adminWallet, userWallet, handle);
-
-      // 2. Store detailed profile info in MongoDB
-      const client = await clientPromise;
-      const db = client.db("cypherpunk");
-      const usersCollection = db.collection("users");
-
-      await usersCollection.updateOne(
-        { walletAddress: walletAddress },
-        {
-          $set: {
-            walletAddress: walletAddress,
-            twitter: {
-              handle,
-              name,
-              profileImageUrl,
-            },
-            updatedAt: new Date(),
-          },
-        },
-        { upsert: true },
-      );
     } else {
       return NextResponse.json(
         { error: "Unsupported provider" },

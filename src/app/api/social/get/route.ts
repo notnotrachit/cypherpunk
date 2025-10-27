@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
+import { getSocialLink } from "@/lib/solana-program";
+import { PublicKey } from "@solana/web3.js";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,19 @@ export async function GET(req: Request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db("cypherpunk");
-    const user = await db
-      .collection("users")
-      .findOne({ walletAddress: wallet });
+    let walletPubkey: PublicKey;
+    try {
+      walletPubkey = new PublicKey(wallet);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid wallet address" },
+        { status: 400 },
+      );
+    }
 
-    if (!user) {
+    const socialLink = await getSocialLink(walletPubkey);
+
+    if (!socialLink) {
       return NextResponse.json({
         linked: false,
         wallet,
@@ -37,7 +44,7 @@ export async function GET(req: Request) {
       linked: true,
       wallet,
       socials: {
-        twitter: user.twitter || null,
+        twitter: socialLink.twitter || null,
       },
     });
   } catch (error: unknown) {

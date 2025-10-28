@@ -12,7 +12,6 @@ This project includes a Phantom login flow for Solana, with backend verification
 
 - Client components:
   - src/components/PhantomLogin.tsx handles connect -> fetch nonce/message -> sign -> verify.
-  - src/components/CheckSessionButton.tsx demonstrates calling a protected API from the browser.
 
 - Run locally:
   1) Create a .env.local file in the project root and set:

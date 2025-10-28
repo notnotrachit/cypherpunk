@@ -1,16 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Hanken_Grotesk, Fauna_One, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import NextAuthProvider from "@/components/NextAuthProvider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const hanken = Hanken_Grotesk({
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const crete = Fauna_One({
   subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-serif",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -25,11 +35,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <NextAuthProvider>{children}</NextAuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script src="https://tweakcn.com/live-preview.min.js"></script>
+      </head>
+      <body className={`${hanken.variable} ${crete.variable} ${jetbrains.variable} font-sans antialiased bg-background text-foreground`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <NextAuthProvider>{children}</NextAuthProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Search, History, Wallet, Loader2 } from "lucide-react";
 
 interface PendingClaim {
   amount: number;
@@ -78,6 +82,7 @@ export default function ClaimPendingFunds() {
   const checkPendingClaims = async () => {
     if (!publicKey) {
       setError("Please sign in first");
+      toast.error("Please sign in first");
       return;
     }
 
@@ -86,19 +91,26 @@ export default function ClaimPendingFunds() {
     setPendingClaims([]);
 
     try {
-      const response = await fetch("/api/tokens/pending-claims", {
-        credentials: "include",
+      const task = (async () => {
+        const response = await fetch("/api/tokens/pending-claims", {
+          credentials: "include",
+        });
+        const data: PendingClaimsResponse = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to check pending claims");
+        }
+        setPendingClaims(data.claims || []);
+        return data.claims?.length ?? 0;
+      })();
+
+      const count = await toast.promise(task, {
+        loading: "Checking pending claims…",
+        success: (n: number) =>
+          n > 0 ? `Found ${n} pending ${n === 1 ? "claim" : "claims"}` : "No pending claims",
+        error: (err: unknown) => (err instanceof Error ? err.message : String(err)),
       });
 
-      const data: PendingClaimsResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to check pending claims");
-      }
-
-      setPendingClaims(data.claims || []);
-
-      if (!data.claims || data.claims.length === 0) {
+      if (count === 0) {
         setError("No pending claims found");
       }
     } catch (err: unknown) {
@@ -106,6 +118,7 @@ export default function ClaimPendingFunds() {
       const message =
         err instanceof Error ? err.message : "Failed to check pending claims";
       setError(message);
+      toast.error(message);
     } finally {
       setChecking(false);
     }
@@ -116,23 +129,31 @@ export default function ClaimPendingFunds() {
     setPaymentHistory(null);
 
     try {
-      const response = await fetch(
-        `/api/tokens/payment-history?handle=${encodeURIComponent(handle)}`,
-        { credentials: "include" },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load payment history");
-      }
-
-      const data: PaymentHistory = await response.json();
-      setPaymentHistory(data);
-      setExpandedClaim(handle);
+      const task = (async () => {
+        const response = await fetch(
+          `/api/tokens/payment-history?handle=${encodeURIComponent(handle)}`,
+          { credentials: "include" },
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load payment history");
+        }
+        const data: PaymentHistory = await response.json();
+        setPaymentHistory(data);
+        setExpandedClaim(handle);
+        return data.payments.length;
+      })();
+      await toast.promise(task, {
+        loading: "Loading payment history…",
+        success: (n: number) =>
+          n > 0 ? `${n} transaction${n === 1 ? "" : "s"} found` : "No payment history found",
+        error: (err: unknown) => (err instanceof Error ? err.message : String(err)),
+      });
     } catch (err: unknown) {
       console.error("Error loading payment history:", err);
       const message =
         err instanceof Error ? err.message : "Failed to load payment history";
       setError(message);
+      toast.error(message);
     } finally {
       setLoadingHistory(false);
     }
@@ -141,6 +162,7 @@ export default function ClaimPendingFunds() {
   const claimFunds = async (handle: string) => {
     if (!publicKey) {
       setError("Please sign in first");
+      toast.error("Please sign in first");
       return;
     }
 
@@ -152,28 +174,11 @@ export default function ClaimPendingFunds() {
       // Check if Phantom is available
       const provider = (window as WindowWithSolana).solana;
       if (!provider || !provider.isPhantom) {
-        throw new Error("Phantom wallet not found. Please install Phantom.");
+        const msg = "Phantom wallet not found. Please install Phantom.";
+        toast.error(msg);
+        throw new Error(msg);
       }
 
-      // Build the claim transaction via API
-      const buildResponse = await fetch("/api/tokens/build-claim-transaction", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ socialHandle: handle }),
-      });
-
-      const buildData: BuildClaimResponse = await buildResponse.json();
-
-      if (!buildResponse.ok) {
-        throw new Error(buildData.error || "Failed to build claim transaction");
-      }
-
-      const { transaction: transactionBase58, amount } = buildData;
-
-      // Decode base58 transaction
       const decodeBase58 = (str: string) => {
         const ALPHABET =
           "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -208,30 +213,47 @@ export default function ClaimPendingFunds() {
         return new Uint8Array(bytes.reverse());
       };
 
-      const transactionBytes = decodeBase58(transactionBase58);
+      const task = (async () => {
+        // Build the claim transaction via API
+        const buildResponse = await fetch("/api/tokens/build-claim-transaction", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ socialHandle: handle }),
+        });
 
-      // Create a transaction-like object for Phantom
-      const transaction: PhantomTransactionLike = {
-        serialize: () => transactionBytes,
-        serializeMessage: () => transactionBytes,
-      };
+        const buildData: BuildClaimResponse = await buildResponse.json();
+        if (!buildResponse.ok) {
+          throw new Error(buildData.error || "Failed to build claim transaction");
+        }
 
-      // Sign and send with Phantom
-      const result = await provider.signAndSendTransaction(transaction);
-      const signature = result.signature;
+        const { transaction: transactionBase58, amount } = buildData;
+        const transactionBytes = decodeBase58(transactionBase58);
+        const transaction: PhantomTransactionLike = {
+          serialize: () => transactionBytes,
+          serializeMessage: () => transactionBytes,
+        };
+        const result = await provider.signAndSendTransaction(transaction);
+        (window as WindowWithSolana).lastClaimSignature = result.signature;
+        return amount;
+      })();
 
-      setSuccess(`Successfully claimed ${amount / 1_000_000} USDC!`);
-
-      // Store signature for the link
-      (window as WindowWithSolana).lastClaimSignature = signature;
-
-      // Refresh pending claims
+      toast.promise(task, {
+        loading: "Claiming funds…",
+        success: (a: number) => `Successfully claimed ${a / 1_000_000} USDC!`,
+        error: (err: unknown) => (err instanceof Error ? err.message : String(err)),
+      });
+      const amt = await task;
+      setSuccess(`Successfully claimed ${amt / 1_000_000} USDC!`);
       setTimeout(() => checkPendingClaims(), 2000);
     } catch (err: unknown) {
       console.error("Error claiming funds:", err);
       const message =
         err instanceof Error ? err.message : "Failed to claim funds";
       setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -239,96 +261,76 @@ export default function ClaimPendingFunds() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="text-xl font-semibold text-foreground">
         Claim Pending Funds
       </h2>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 text-sm text-muted-foreground">
         Check if anyone has sent you USDC before you linked your wallet. These
         funds are held in escrow waiting for you to claim them.
       </p>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+      <p className="mt-1 text-xs text-muted-foreground">
         Note: If multiple people sent you funds, the total amount is accumulated
         but only the most recent sender is shown.
       </p>
 
       <div className="mt-6">
-        <button
-          onClick={checkPendingClaims}
-          disabled={!publicKey || checking}
-          className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          {checking ? "Checking..." : "Check for Pending Claims"}
-        </button>
+        <Button onClick={checkPendingClaims} disabled={!publicKey || checking}>
+          {checking ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking...
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Check for Pending Claims
+            </span>
+          )}
+        </Button>
       </div>
 
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/30">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-        </div>
-      )}
-
-      {success && (
-        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
-          <p className="text-sm text-green-800 dark:text-green-200">
-            {success}
-            {(window as WindowWithSolana).lastClaimSignature && (
-              <>
-                {" "}
-                <a
-                  href={`https://explorer.solana.com/tx/${(window as WindowWithSolana).lastClaimSignature}?cluster=devnet`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold underline hover:no-underline"
-                >
-                  View on Explorer →
-                </a>
-              </>
-            )}
-          </p>
-        </div>
-      )}
+      {null}
 
       {pendingClaims.length > 0 && (
         <div className="mt-6 space-y-4">
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-lg font-semibold text-foreground">
             Pending Claims:
           </h3>
           {pendingClaims.map((claim, index) => (
-            <div
-              key={index}
-              className="rounded-lg border border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-800/50"
-            >
-              <div className="p-4">
+            <Card key={index}>
+              <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+                    <p className="text-2xl font-bold">
                       {(claim.amount / 1_000_000).toFixed(2)} USDC
                     </p>
-                    <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       For: <span className="font-mono">{claim.handle}</span>
                     </p>
                     {claim.paymentCount > 1 ? (
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-500">
-                        From:{" "}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        From: {" "}
                         <span className="font-semibold">
                           {claim.paymentCount} payment
                           {claim.paymentCount !== 1 ? "s" : ""}
                         </span>
-                        <span className="ml-1 text-zinc-400 dark:text-zinc-600">
+                        <span className="ml-1 text-muted-foreground/70">
                           (most recent: {claim.sender.slice(0, 8)}...
                           {claim.sender.slice(-8)})
                         </span>
                       </p>
                     ) : (
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-500">
-                        From:{" "}
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        From: {" "}
                         <span className="font-mono">
                           {claim.sender.slice(0, 8)}...{claim.sender.slice(-8)}
                         </span>
                       </p>
                     )}
 
-                    <button
+                    <Button
+                      variant="link"
+                      className="mt-2 px-0 h-auto"
                       onClick={() => {
                         if (expandedClaim === claim.handle) {
                           setExpandedClaim(null);
@@ -338,45 +340,56 @@ export default function ClaimPendingFunds() {
                         }
                       }}
                       disabled={loadingHistory}
-                      className="mt-2 text-xs text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 underline"
                     >
-                      {loadingHistory && expandedClaim === claim.handle
-                        ? "Loading..."
-                        : expandedClaim === claim.handle
-                          ? "Hide payment history"
-                          : "View payment history"}
-                    </button>
+                      <span className="inline-flex items-center gap-1.5">
+                        {loadingHistory && expandedClaim === claim.handle ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <History className="h-4 w-4" />
+                        )}
+                        {loadingHistory && expandedClaim === claim.handle
+                          ? "Loading..."
+                          : expandedClaim === claim.handle
+                            ? "Hide payment history"
+                            : "View payment history"}
+                      </span>
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => claimFunds(claim.handle)}
-                    disabled={loading}
-                    className="ml-4 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-green-500 dark:hover:bg-green-400"
-                  >
-                    {loading ? "Claiming..." : "Claim"}
-                  </button>
+                  <Button onClick={() => claimFunds(claim.handle)} disabled={loading} className="ml-4">
+                    {loading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Claiming...
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <Wallet className="h-4 w-4" />
+                        Claim
+                      </span>
+                    )}
+                  </Button>
                 </div>
-              </div>
+              </CardContent>
 
               {expandedClaim === claim.handle && paymentHistory && (
-                <div className="border-t border-zinc-200 dark:border-zinc-700 p-4 bg-white dark:bg-zinc-900">
-                  <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
-                    Payment History ({paymentHistory.payments.length}{" "}
-                    transaction{paymentHistory.payments.length !== 1 ? "s" : ""}
-                    )
+                <div className="border-t p-4">
+                  <h4 className="text-sm font-semibold mb-3">
+                    Payment History ({paymentHistory.payments.length} transaction
+                    {paymentHistory.payments.length !== 1 ? "s" : ""})
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {paymentHistory.payments.map(
                       (payment: Payment, idx: number) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs p-2 rounded bg-zinc-50 dark:bg-zinc-800"
+                          className="flex items-center justify-between text-xs p-2 rounded bg-accent/40"
                         >
                           <div className="flex-1">
-                            <p className="font-mono text-zinc-900 dark:text-zinc-100">
+                            <p className="font-mono">
                               {payment.sender.slice(0, 8)}...
                               {payment.sender.slice(-8)}
                             </p>
-                            <p className="text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            <p className="text-muted-foreground mt-0.5">
                               {new Date(
                                 payment.timestamp * 1000,
                               ).toLocaleString()}
@@ -387,13 +400,13 @@ export default function ClaimPendingFunds() {
                     )}
                   </div>
                   {paymentHistory.payments.length === 0 && (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-4">
+                    <p className="text-xs text-muted-foreground text-center py-4">
                       No payment history found
                     </p>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

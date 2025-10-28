@@ -2,11 +2,17 @@
 
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import Modal from "./Modal";
 import PhantomLogin from "./PhantomLogin";
-import { RiArrowRightLine } from "react-icons/ri";
-import { CgSpinner } from "react-icons/cg";
-import { SiGitconnected } from "react-icons/si";
+import { ArrowRight, Loader2, Plug } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Props = {
   className?: string;
@@ -57,61 +63,49 @@ export default function ConnectCTA({
   return (
     <div className={["flex items-center gap-3", className ?? ""].join(" ")}>
       {showAddressChip && address ? (
-        <span className="hidden rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-200 md:inline dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700">
+        <Badge variant="outline" className="hidden md:inline font-mono">
           {shortAddress(address)}
-        </span>
+        </Badge>
       ) : null}
 
       {address ? (
-        <button
-          type="button"
-          onClick={goToDashboard}
-          disabled={navigating}
-          className={[
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white",
-            navigating
-              ? "bg-zinc-400 dark:bg-zinc-700 cursor-wait"
-              : "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
-            "transition-colors",
-          ].join(" ")}
-        >
+        <Button type="button" onClick={goToDashboard} disabled={navigating}>
           {navigating ? (
             <span className="inline-flex items-center gap-2">
-              <Spinner className="text-white" />
+              <Spinner />
               Opening…
             </span>
           ) : (
             <>
-              <RiArrowRightLine className="h-4 w-4" aria-hidden="true" />
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
               {dashboardLabel}
             </>
           )}
-        </button>
+        </Button>
       ) : (
         <>
-          <button
-            type="button"
-            onClick={openModal}
-            className="inline-flex items-center gap-2.5 rounded-md bg-violet-600 px-6 py-3 text-base font-semibold text-white ring-1 ring-violet-500/30 transition-all hover:scale-[1.01] hover:bg-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 dark:bg-violet-500 dark:hover:bg-violet-600"
-          >
-            <RiArrowRightLine className="h-5 w-5" aria-hidden="true" />
+          <Button type="button" onClick={openModal} size="lg">
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
             {connectLabel}
-          </button>
+          </Button>
 
-          <Modal
-            open={open}
-            onCloseAction={closeModal}
-            title="Connect your wallet"
-            icon={<SiGitconnected className="h-5 w-5" aria-hidden="true" />}
-            description="Connect your Phantom wallet and sign a message. We’ll verify it on the server to securely sign you in."
-            size="sm"
-          >
-            <PhantomLogin
-              buttonLabel="Continue with Phantom"
-              onAuthenticatedAction={onAuthenticated}
-            />
-          </Modal>
+          <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : closeModal())}>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Plug className="h-5 w-5" aria-hidden="true" />
+                  Connect your wallet
+                </DialogTitle>
+                <DialogDescription>
+                  Connect your Phantom wallet and sign a message. We’ll verify it on the server to securely sign you in.
+                </DialogDescription>
+              </DialogHeader>
+              <PhantomLogin
+                buttonLabel="Continue with Phantom"
+                onAuthenticatedAction={onAuthenticated}
+              />
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>
@@ -120,8 +114,7 @@ export default function ConnectCTA({
 
 function Spinner({ className }: { className?: string }) {
   return (
-    <CgSpinner
-      className={["h-4 w-4 animate-spin", className ?? ""].join(" ")}
-    />
+    <Loader2 className={["h-4 w-4 animate-spin", className ?? ""].join(" ")}
+      aria-hidden="true" />
   );
 }

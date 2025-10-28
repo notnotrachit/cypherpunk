@@ -3,6 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { signIn, useSession, signOut } from "next-auth/react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Twitter } from "lucide-react";
 
 type TwitterProfile = {
   handle: string;
@@ -55,19 +59,27 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
     setLinking(true);
 
     try {
-      const res = await fetch("/api/social/link-verified", { method: "POST" });
-      const data = await res.json();
+      const task = (async () => {
+        const res = await fetch("/api/social/link-verified", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+          linkedSessionRef.current = null; // Reset on error so user can retry
+          throw new Error(data.error || "Failed to link");
+        }
+        await fetchSocialLinks();
+        return `${session.provider} (@${session.username})`;
+      })();
 
-      if (!res.ok) {
-        linkedSessionRef.current = null; // Reset on error so user can retry
-        throw new Error(data.error || "Failed to link");
-      }
+      await toast.promise(task, {
+        loading: "Linking account…",
+        success: (s) => `Linked ${s}`,
+        error: (e: unknown) =>
+          (e instanceof Error ? e.message : String(e)) || "Failed to link account",
+      });
 
       setSuccess(
         `${session.provider} account (${session.username}) linked successfully!`,
       );
-      await fetchSocialLinks();
-
       // Sign out from NextAuth (clear OAuth session) after successful link
       setTimeout(async () => {
         await signOut({ redirect: false });
@@ -76,6 +88,9 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
       }, 3000);
     } catch (err: unknown) {
       setError(
+        (err instanceof Error && err.message) || "Failed to link account",
+      );
+      toast.error(
         (err instanceof Error && err.message) || "Failed to link account",
       );
     } finally {
@@ -110,9 +125,13 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
 
     try {
       // Trigger OAuth - will redirect to provider and back
+      toast.info("Redirecting to Twitter…");
       await signIn(provider, { callbackUrl: "/dashboard" });
     } catch (err: unknown) {
       setError(
+        (err instanceof Error && err.message) || "Failed to start OAuth",
+      );
+      toast.error(
         (err instanceof Error && err.message) || "Failed to start OAuth",
       );
     }
@@ -120,8 +139,8 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent"></div>
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -130,44 +149,28 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
     <div className="space-y-6">
       {/* Show authenticated user info */}
       {session && session.username && (
-        <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900 dark:border-violet-900 dark:bg-violet-950 dark:text-violet-200">
-          <p className="font-medium">
-            ✓ Authenticated with {session.provider}:
-          </p>
+        <div className="rounded-lg border p-4 text-sm">
+          <p className="font-medium">Authenticated with {session.provider}:</p>
           <p className="mt-1 text-xs">
             Username: <strong>@{session.username}</strong>
           </p>
           {linking && (
-            <p className="mt-2 text-xs animate-pulse">
-              Linking to blockchain...
-            </p>
+            <p className="mt-2 text-xs animate-pulse">Linking to blockchain...</p>
           )}
         </div>
       )}
 
-      {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-900 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
-          {success}
-        </div>
-      )}
+      {null}
 
       {/* Twitter */}
       <div className="space-y-3">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Twitter / X Account
-        </label>
-        <p className="  text-xs text-zinc-500 dark:text-zinc-500">
+        <h2 className="text-xl font-semibold text-foreground">Twitter / X Account</h2>
+        <p className="text-sm text-muted-foreground">
           Link your Twitter / X account so that people can directly send funds
           to you via your profile on the platform.
         </p>
         {socials?.twitter ? (
-          <div className="flex items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 py-2 px-4 dark:border-zinc-800 dark:bg-zinc-800/50">
+          <div className="flex items-center gap-4 rounded-lg border py-2 px-4">
             <Image
               src={socials.twitter.profileImageUrl}
               alt={`@${socials.twitter.handle} profile picture`}
@@ -176,29 +179,35 @@ export default function SocialLinkingForm({ walletAddress }: Props) {
               className="h-10 w-10 rounded-full"
             />
             <div className="flex-1">
-              <p className="font-semibold text-zinc-900 dark:text-zinc-100">
+              <p className="font-semibold text-foreground">
                 {socials.twitter.name}
               </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-muted-foreground">
                 {socials.twitter.handle}
               </p>
             </div>
-            <button
-              onClick={() => linkSocial("twitter")}
-              disabled={linking}
-              className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-300 disabled:opacity-50 transition-colors dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-            >
-              {linking ? "Linking..." : "Relink"}
-            </button>
+            <Button onClick={() => linkSocial("twitter")} disabled={linking} size="sm" variant="secondary">
+              {linking ? (
+                "Linking..."
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <Twitter className="h-4 w-4" />
+                  Relink
+                </span>
+              )}
+            </Button>
           </div>
         ) : (
-          <button
-            onClick={() => linkSocial("twitter")}
-            disabled={linking}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#1DA1F2] px-6 py-3 text-sm font-medium text-white hover:bg-[#1a8cd8] disabled:opacity-50 transition-colors"
-          >
-            {linking ? "Linking..." : "Link with Twitter"}
-          </button>
+          <Button onClick={() => linkSocial("twitter")} disabled={linking} className="w-full" size="lg">
+            {linking ? (
+              "Linking..."
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <Twitter className="h-5 w-5" />
+                Link with Twitter
+              </span>
+            )}
+          </Button>
         )}
       </div>
     </div>

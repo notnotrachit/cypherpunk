@@ -2,8 +2,9 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import bs58 from "bs58";
-import { RiWallet3Line } from "react-icons/ri";
-import { CgSpinner } from "react-icons/cg";
+import { Wallet, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Props = {
   className?: string;
@@ -134,20 +135,32 @@ export default function PhantomLogin({
   const handleSignIn = useCallback(async () => {
     clearErrors();
     try {
-      setConnecting(true);
-      const addr = address ?? (await connectWallet());
-      setConnecting(false);
+      const task = (async () => {
+        setConnecting(true);
+        const addr = address ?? (await connectWallet());
+        setConnecting(false);
 
-      setSigning(true);
-      const { message } = await fetchNonceAndMessage(addr);
-      const signature = await signMessageWithWallet(message);
-      setSigning(false);
+        setSigning(true);
+        const { message } = await fetchNonceAndMessage(addr);
+        const signature = await signMessageWithWallet(message);
+        setSigning(false);
 
-      const signatureB58 = bs58.encode(signature);
+        const signatureB58 = bs58.encode(signature);
 
-      setVerifying(true);
-      await verifySignature(addr, signatureB58, message);
-      setVerifying(false);
+        setVerifying(true);
+        await verifySignature(addr, signatureB58, message);
+        setVerifying(false);
+        return addr;
+      })();
+
+      toast.promise(task, {
+        loading: "Authenticating…",
+        success: "Signed in",
+        error: (err: unknown) =>
+          (err instanceof Error ? err.message : String(err)) ||
+          "Authentication failed",
+      });
+      const addr = await task;
 
       if (onAuthenticatedAction) {
         onAuthenticatedAction(addr);
@@ -160,6 +173,7 @@ export default function PhantomLogin({
       setVerifying(false);
       const err = e instanceof Error ? e : new Error(String(e));
       setError(err.message || "Authentication failed");
+      toast.error(err.message || "Authentication failed");
       onErrorAction?.(err);
     }
   }, [
@@ -177,36 +191,24 @@ export default function PhantomLogin({
   return (
     <div className={className}>
       {!installed ? (
-        <a
-          href="https://phantom.app/download"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex w-full items-center justify-center rounded-md bg-violet-600 px-5 py-3 text-sm font-medium text-white transition-all hover:bg-violet-700 focus:outline-none  dark:bg-violet-500 dark:hover:bg-violet-600"
-        >
-          <span className="inline-flex items-center gap-2">
-            <RiWallet3Line className="h-5 w-5" aria-hidden="true" />
-            Install Phantom
-          </span>
-        </a>
+        <Button asChild className="w-full" size="lg">
+          <a href="https://phantom.app/download" target="_blank" rel="noreferrer">
+            <span className="inline-flex items-center gap-2">
+              <Wallet className="h-5 w-5" aria-hidden="true" />
+              Install Phantom
+            </span>
+          </a>
+        </Button>
       ) : (
         <div className="w-full space-y-3">
           <div className="w-full">
-            <button
-              disabled={busy}
-              onClick={handleSignIn}
-              className={`inline-flex w-full items-center justify-center rounded-md ${
-                busy
-                  ? "bg-zinc-400 dark:bg-zinc-700 cursor-wait"
-                  : "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
-              } px-5 py-3 text-sm font-medium text-white transition-all focus:outline-none disabled:cursor-not-allowed`}
-              title="Connect your wallet"
-            >
+            <Button disabled={busy} onClick={handleSignIn} className="w-full" size="lg" title="Connect your wallet">
               {busy ? (
                 <span
                   className="inline-flex items-center gap-2"
                   aria-live="polite"
                 >
-                  <CgSpinner className="h-4 w-4 animate-spin text-white" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   {connecting
                     ? "Connecting…"
                     : signing
@@ -217,20 +219,16 @@ export default function PhantomLogin({
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
-                  <RiWallet3Line className="h-5 w-5" aria-hidden="true" />
+                  <Wallet className="h-5 w-5" aria-hidden="true" />
                   {buttonLabel}
                 </span>
               )}
-            </button>
+            </Button>
           </div>
 
-          {error ? (
-            <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-              {error}
-            </div>
-          ) : null}
+          {null}
 
-          <p className="text-xs text-zinc-500 text-center">
+          <p className="text-xs text-muted-foreground text-center">
             By clicking “{buttonLabel}”, you will connect your wallet, sign a
             message, and we’ll verify it on the server before granting access.
           </p>

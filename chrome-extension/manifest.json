@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Cypherpunk - Solana Social Pay",
+  "name": "Rivo",
   "version": "1.0.0",
   "description": "Send USDC to Twitter users via their linked Solana wallets",
   "permissions": [
@@ -34,15 +34,15 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.svg",
-      "48": "icons/icon48.svg",
-      "128": "icons/icon128.svg"
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
     }
   },
   "icons": {
-    "16": "icons/icon16.svg",
-    "48": "icons/icon48.svg",
-    "128": "icons/icon128.svg"
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "web_accessible_resources": [
     {

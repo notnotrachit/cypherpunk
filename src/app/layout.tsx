@@ -24,9 +24,12 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cypherpunk",
+  title: "Rivo",
   description:
     "Set AUTH_JWT_SECRET in your environment to enable secure wallet auth.",
+  icons: {
+    icon: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

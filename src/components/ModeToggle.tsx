@@ -14,10 +14,15 @@ import {
 import { Sun, Moon, Laptop } from "lucide-react"
 
 export function ModeToggle() {
-  const { theme, setTheme, systemTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
+
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const currentLabel = React.useMemo(() => {
-    const effective = theme === "system" ? systemTheme : theme
+    const effective = theme === "system" ? resolvedTheme : theme
     switch (effective) {
       case "dark":
         return "Dark"
@@ -26,9 +31,12 @@ export function ModeToggle() {
       default:
         return "System"
     }
-  }, [theme, systemTheme])
+  }, [theme, resolvedTheme])
 
-  const effective = theme === "system" ? systemTheme : theme
+  const effective = theme === "system" ? resolvedTheme : theme
+
+  // Avoid SSR/client hydration mismatch by rendering only after mount
+  if (!mounted) return null
 
   return (
     <DropdownMenu>

@@ -610,12 +610,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
       setTimeout(() => {
         statusDiv.innerHTML += `<br><a href="https://explorer.solana.com/tx/${txSignature}?cluster=devnet" target="_blank" style="color: #14F195; text-decoration: underline;">View on Explorer</a>`;
       }, 500);
-
-      // Close modal after 5 seconds
-      setTimeout(() => {
-        const modal = document.getElementById("cypherpunk-modal");
-        if (modal) modal.remove();
-      }, 5000);
     } else if (signedResult.success) {
       // Old flow for backward compatibility
       const txSignature = signedResult.signature;
@@ -643,12 +637,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
       setTimeout(() => {
         statusDiv.innerHTML += `<br><a href="https://explorer.solana.com/tx/${txSignature}?cluster=devnet" target="_blank" style="color: #14F195; text-decoration: underline;">View on Explorer</a>`;
       }, 500);
-
-      // Close modal after 5 seconds
-      setTimeout(() => {
-        const modal = document.getElementById("cypherpunk-modal");
-        if (modal) modal.remove();
-      }, 5000);
     } else {
       throw new Error(signedResult.message || "Transaction failed");
     }

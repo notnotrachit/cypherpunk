@@ -13,6 +13,21 @@
                 font-display: swap;
             }
         </style>
+        <style>
+            /* Generic icon that inherits text color */
+            .popup-icon {
+                display: inline-block;
+                width: 14px;
+                height: 14px;
+                background-color: currentColor;
+                -webkit-mask-size: contain;
+                mask-size: contain;
+                -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                mask-position: center;
+            }
+        </style>
         <script src="./tailwind.js"></script>
         <link rel="stylesheet" href="frankenui.css" />
         <style type="text/tailwindcss">
@@ -73,12 +88,7 @@
 
     <body class="bg-background text-foreground">
         <div class="p-6 w-80">
-            <div class="text-center">
-                <img
-                    src="icons/logo.svg"
-                    alt="RIVO Logo"
-                    class="w-12 mx-auto mb-3"
-                />
+            <div class="mb-4">
                 <h1 class="font-logo text-2xl text-foreground">RIVO</h1>
             </div>
 
@@ -89,24 +99,25 @@
                 <a
                     href="https://rivo.rcht.dev/dashboard"
                     target="_blank"
-                    class="uk-btn uk-btn-primary w-full"
-                    >Connect Wallet</a
+                    class="uk-btn uk-btn-primary w-full inline-flex items-center justify-center gap-2"
+                    ><span class="popup-icon" style="-webkit-mask-image: url('svgs/wallet.svg'); mask-image: url('svgs/wallet.svg');"></span>Connect Wallet</a
                 >
             </div>
 
             <div id="connected-view" class="hidden mt-4">
-                <div class="text-center mb-4">
-                    <div class="text-xs text-muted-foreground">Wallet</div>
-                    <div
-                        id="wallet-address"
-                        class="text-sm font-medium text-foreground cursor-help"
-                    ></div>
+                <div class="bg-card rounded-lg p-4 mb-4 border border-border text-center">
+                    <div class="text-xs text-muted-foreground mb-1 inline-flex items-center gap-1">
+                        <span class="popup-icon" style="-webkit-mask-image: url('svgs/wallet.svg'); mask-image: url('svgs/wallet.svg');"></span>
+                        Wallet
+                    </div>
+                    <div id="wallet-address" class="text-sm font-medium text-foreground font-mono break-all cursor-help"></div>
                 </div>
 
                 <div
                     class="bg-card rounded-lg p-4 mb-4 text-center border border-border"
                 >
-                    <div class="text-xs text-muted-foreground mb-1">
+                    <div class="text-xs text-muted-foreground mb-1 inline-flex items-center justify-center gap-1">
+                        <span class="popup-icon" style="-webkit-mask-image: url('svgs/coins.svg'); mask-image: url('svgs/coins.svg');"></span>
                         USDC Balance
                     </div>
                     <div
@@ -121,15 +132,9 @@
                     <a
                         href="https://rivo.rcht.dev/dashboard"
                         target="_blank"
-                        class="uk-btn uk-btn-primary w-full"
-                        >Open Dashboard</a
+                        class="uk-btn uk-btn-primary w-full inline-flex items-center justify-center gap-2"
+                        ><span class="popup-icon" style="-webkit-mask-image: url('svgs/external-link.svg'); mask-image: url('svgs/external-link.svg');"></span>Open Dashboard</a
                     >
-                    <button
-                        class="uk-btn uk-btn-secondary w-full"
-                        id="refresh-btn"
-                    >
-                        Refresh Status
-                    </button>
                 </div>
             </div>
         </div>

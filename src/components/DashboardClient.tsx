@@ -20,7 +20,6 @@ import {
   Check,
   History,
   Coins,
-  Twitter,
 } from "lucide-react";
 import { getStoredTransactions } from "@/lib/transaction-storage";
 
@@ -475,7 +474,7 @@ export default function DashboardClient({
           sessionStorage.removeItem(key);
         }
       });
-      toast.info("Redirecting to Twitter…");
+      toast.info("Redirecting to X/Twitter...");
       await signIn("twitter", { callbackUrl: "/dashboard" });
     } catch (e: unknown) {
       const m = e instanceof Error ? e.message : String(e);
@@ -509,12 +508,13 @@ export default function DashboardClient({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className={`grid gap-6 ${totalPendingMicro > 0 ? 'sm:grid-cols-2' : ''}`}>
         {totalPendingMicro > 0 && (
           <Card>
             <CardHeader className="flex flex-row items-end justify-between gap-4">
               <div>
-                <CardTitle className="text-sm text-muted-foreground">
+                <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Coins className="h-4 w-4" />
                   Pending balance
                 </CardTitle>
                 <div className="mt-2 text-4xl sm:text-5xl font-semibold tracking-tight">
@@ -551,7 +551,8 @@ export default function DashboardClient({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
+            <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Wallet className="h-4 w-4" />
               Wallet balance
             </CardTitle>
             <div className="mt-2 text-4xl sm:text-5xl font-semibold tracking-tight">
@@ -575,83 +576,8 @@ export default function DashboardClient({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Coins className="h-5 w-5" />
-                Unclaimed
-              </CardTitle>
-              <CardDescription>
-                Incoming funds waiting to be claimed
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {claimsLoading ? (
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-                </div>
-              ) : pendingClaims.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No pending claims
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pendingClaims.map((c) => (
-                    <div
-                      key={c.handle}
-                      className="flex items-center justify-between rounded-md border p-3"
-                    >
-                      <div>
-                        <div className="text-lg font-semibold">
-                          {(c.amount / 1_000_000).toFixed(2)} USDC
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          for @{c.handle}
-                        </div>
-                        {c.paymentCount > 0 ? (
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            from {shortAddr(c.sender)}
-                            {c.paymentCount > 1
-                              ? ` and ${c.paymentCount - 1} more`
-                              : ""}
-                          </div>
-                        ) : null}
-                      </div>
-                      <div>
-                        <Button
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const task = claimOne(c.handle);
-                              await toast.promise(task, {
-                                loading: "Claiming…",
-                                success: (a: number) =>
-                                  `Claimed ${a / 1_000_000} USDC`,
-                                error: (err: unknown) =>
-                                  err instanceof Error
-                                    ? err.message
-                                    : String(err),
-                              });
-                              await refreshData();
-                            } catch (e: unknown) {
-                              const m =
-                                e instanceof Error ? e.message : String(e);
-                              toast.error(m);
-                            }
-                          }}
-                        >
-                          Claim
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
                 <History className="h-5 w-5" />
-                Previous transactions
+                Previous Activity
               </CardTitle>
               <CardDescription>
                 Activity associated with your linked handle
@@ -766,9 +692,9 @@ export default function DashboardClient({
                         {linking ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Twitter className="h-4 w-4" />
+                          <span className="text-lg">𝕏</span>
                         )}
-                        {twitterHandle ? "Relink Twitter" : "Link Twitter"}
+                        {twitterHandle ? "Relink X/Twitter" : "Link X/Twitter"}
                       </span>
                     </Button>
                   </div>

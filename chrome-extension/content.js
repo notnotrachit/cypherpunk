@@ -25,6 +25,13 @@ window.addEventListener("message", (event) => {
 
   if (type === "CYPHERPUNK_PHANTOM_CONNECTED") {
     window.cypherpunkPhantomConnected = data;
+    try {
+      // Re-run to attempt adding the badge now that Phantom is connected
+      processedProfiles.clear();
+      setTimeout(() => {
+        processCurrentPage();
+      }, 0);
+    } catch (_) {}
   }
 
   if (type === "CYPHERPUNK_TRANSACTION_SIGNED") {
@@ -33,6 +40,10 @@ window.addEventListener("message", (event) => {
 
   if (type === "CYPHERPUNK_PHANTOM_ERROR") {
     window.cypherpunkPhantomError = data;
+  }
+
+  if (type === "CYPHERPUNK_PHANTOM_CONNECTION_STATUS") {
+    window.cypherpunkPhantomConnStatus = data;
   }
 });
 
@@ -79,6 +90,39 @@ function observeProfileChanges() {
   });
 }
 
+// Check authentication and Phantom connection status before showing the badge
+async function prerequisitesMet() {
+  // Check auth via background script
+  try {
+    const auth = await chrome.runtime.sendMessage({ action: "checkAuth" });
+    if (!auth || !auth.authenticated) return false;
+  } catch (e) {
+    return false;
+  }
+
+  // Check Phantom connection (only if previously trusted) via injected script
+  window.cypherpunkPhantomConnStatus = undefined;
+  window.postMessage({ type: "CYPHERPUNK_CHECK_PHANTOM_CONNECTION" }, "*");
+
+  const status = await new Promise((resolve) => {
+    let waited = 0;
+    const iv = setInterval(() => {
+      if (window.cypherpunkPhantomConnStatus) {
+        clearInterval(iv);
+        resolve(window.cypherpunkPhantomConnStatus);
+      } else {
+        waited += 100;
+        if (waited >= 1500) {
+          clearInterval(iv);
+          resolve({ connected: false });
+        }
+      }
+    }, 100);
+  });
+
+  return !!status.connected;
+}
+
 // Process the current page
 async function processCurrentPage() {
   // Check if we're on a profile page
@@ -88,6 +132,10 @@ async function processCurrentPage() {
     const handle = extractTwitterHandle();
 
     if (handle && !processedProfiles.has(handle)) {
+      const ready = await prerequisitesMet();
+      if (!ready) {
+        return;
+      }
       processedProfiles.add(handle);
       await checkAndAddSolanaButton(handle);
     }
@@ -188,29 +236,31 @@ function addSolanaButton(handle, walletAddress) {
     return;
   }
 
-  // Create Solana badge (smaller, icon-only for inline display)
+  // Create Send Money button (pill style with Solana logo)
   const badge = document.createElement("button");
   badge.id = "cypherpunk-solana-btn";
-  badge.className = walletAddress
-    ? "cypherpunk-solana-badge cypherpunk-linked"
-    : "cypherpunk-solana-badge cypherpunk-unlinked";
-  badge.setAttribute(
-    "aria-label",
-    walletAddress ? "Pay with Solana" : "Send USDC (Claimable)",
-  );
+  badge.className = "cypherpunk-send-btn";
+  badge.setAttribute("aria-label", "Send Money");
   badge.setAttribute("type", "button");
-  badge.setAttribute(
-    "title",
-    walletAddress
-      ? "Pay with Solana"
-      : "Send USDC - User can claim when they link wallet",
-  );
+  badge.setAttribute("title", "Send Money");
   badge.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 397.7 311.7" fill="currentColor">
-      <path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/>
-      <path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/>
-      <path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/>
+    ${walletAddress ? `
+    <svg width="0" height="0" style="position: absolute;">
+      <defs>
+        <linearGradient id="solana-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#9945FF;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#14F195;stop-opacity:1" />
+        </linearGradient>
+      </defs>
     </svg>
+    ` : ''}
+    <span class="cypherpunk-send-icon ${walletAddress ? 'cypherpunk-send-icon-gradient' : ''}" aria-hidden="true">
+      <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+        <title>Solana</title>
+        <path d="m23.8764 18.0313-3.962 4.1393a.9201.9201 0 0 1-.306.2106.9407.9407 0 0 1-.367.0742H.4599a.4689.4689 0 0 1-.2522-.0733.4513.4513 0 0 1-.1696-.1962.4375.4375 0 0 1-.0314-.2545.4438.4438 0 0 1 .117-.2298l3.9649-4.1393a.92.92 0 0 1 .3052-.2102.9407.9407 0 0 1 .3658-.0746H23.54a.4692.4692 0 0 1 .2523.0734.4531.4531 0 0 1 .1697.196.438.438 0 0 1 .0313.2547.4442.4442 0 0 1-.1169.2297zm-3.962-8.3355a.9202.9202 0 0 0-.306-.2106.941.941 0 0 0-.367-.0742H.4599a.4687.4687 0 0 0-.2522.0734.4513.4513 0 0 0-.1696.1961.4376.4376 0 0 0-.0314.2546.444.444 0 0 0 .117.2297l3.9649 4.1394a.9204.9204 0 0 0 .3052.2102c.1154.049.24.0744.3658.0746H23.54a.469.469 0 0 0 .2523-.0734.453.453 0 0 0 .1697-.1961.4382.4382 0 0 0 .0313-.2546.4444.4442 0 0 0-.1169-.2297zM.46 6.7225h18.7815a.9411.9411 0 0 0 .367-.0742.9202.9202 0 0 0 .306-.2106l3.962-4.1394a.4442.4442 0 0 0 .117-.2297.4378.4378 0 0 0-.0314-.2546.453.453 0 0 0-.1697-.196.469.469 0 0 0-.2523-.0734H4.7596a.941.941 0 0 0-.3658.0745.9203.9203 0 0 0-.3052.2102L.1246 5.9687a.4438.4438 0 0 0-.1169.2295.4375.4375 0 0 0 .0312.2544.4512.4512 0 0 0 .1692.196.4689.4689 0 0 0 .2518.0739z"/>
+      </svg>
+    </span>
+    <span class="cypherpunk-send-label">Send Money</span>
   `;
 
   badge.onclick = (e) => {
@@ -237,10 +287,7 @@ function openPaymentModal(handle, walletAddress) {
   }
 
   const isLinked = !!walletAddress;
-  const modalTitle = isLinked
-    ? `Send USDC to ${handle}`
-    : `Send USDC to ${handle} (Claimable)`;
-
+  const modalTitle = `Send USDC to ${handle}`;
   // Create modal overlay
   const modal = document.createElement("div");
   modal.id = "cypherpunk-modal";
@@ -254,29 +301,44 @@ function openPaymentModal(handle, walletAddress) {
       </div>
 
       <div class="cypherpunk-modal-body">
-        <h2 class="cypherpunk-modal-title">${modalTitle}</h2>
-
+        ${isLinked ? `
         <div class="cypherpunk-balance-display">
           <div class="cypherpunk-balance-label">
-            <img src="${chrome.runtime.getURL('svgs/wallet.svg')}" alt="Wallet" class="cypherpunk-icon">
+            <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/wallet.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/wallet.svg')}');"></span>
             Wallet Address
           </div>
-          <div class="cypherpunk-wallet-address" title="${walletAddress || 'Not linked'}">
-            ${walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}` : 'Not linked'}
+          <div class="cypherpunk-wallet-address" title="${walletAddress}">
+            ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}
           </div>
         </div>
+        ` : `
+        <div class="cypherpunk-info-card">
+          <div class="cypherpunk-info-header">
+            <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/info.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/info.svg')}');"></span>
+            Info
+          </div>
+          <div class="cypherpunk-info-text">
+            This user hasn't linked their wallet yet. Your USDC will be held in escrow and they can claim it when they link their wallet.
+          </div>
+        </div>
+        `}
 
         <div class="cypherpunk-balance-display">
           <div class="cypherpunk-balance-label">
-            <img src="${chrome.runtime.getURL('svgs/coins.svg')}" alt="Balance" class="cypherpunk-icon">
-            Your Balance:
+            <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/coins.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/coins.svg')}');"></span>
+            Your Balance
           </div>
-          <div id="user-balance" class="cypherpunk-balance-amount">Loading...</div>
+          <div id="user-balance" class="cypherpunk-balance-amount">
+            <span class="cypherpunk-icon cypherpunk-loading-spinner" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/loader-circle.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/loader-circle.svg')}');"></span>
+            Loading...
+          </div>
         </div>
+
+        <h2 class="cypherpunk-modal-title">${modalTitle}</h2>
 
         <div class="cypherpunk-amount-input">
           <label for="usdc-amount">
-            <img src="${chrome.runtime.getURL('svgs/hash.svg')}" alt="Amount" class="cypherpunk-icon">
+            <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/hash.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/hash.svg')}');"></span>
             Amount (USDC)
           </label>
           <input
@@ -293,11 +355,11 @@ function openPaymentModal(handle, walletAddress) {
 
       <div class="cypherpunk-modal-footer">
         <button class="cypherpunk-btn-secondary" id="cancel-btn">
-          <img src="${chrome.runtime.getURL('svgs/x.svg')}" alt="Cancel" class="cypherpunk-icon">
+          <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/x.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/x.svg')}');"></span>
           Cancel
         </button>
         <button class="cypherpunk-btn-primary" id="send-usdc-btn">
-          <img src="${chrome.runtime.getURL('svgs/send-horizontal.svg')}" alt="Send" class="cypherpunk-icon">
+          <span class="cypherpunk-icon" style="-webkit-mask-image: url('${chrome.runtime.getURL('svgs/send-horizontal.svg')}'); mask-image: url('${chrome.runtime.getURL('svgs/send-horizontal.svg')}');"></span>
           ${isLinked ? "Send USDC" : "Send to Escrow"}
         </button>
       </div>
@@ -346,15 +408,15 @@ async function fetchUserBalance() {
 
     if (response && response.success) {
       const balance = response.balance || 0;
-      balanceEl.textContent = `${balance.toFixed(2)} USDC`;
+      balanceEl.innerHTML = `${balance.toFixed(2)} USDC`;
       balanceEl.style.color = "hsl(var(--foreground))";
     } else {
-      balanceEl.textContent = "Unable to load";
+      balanceEl.innerHTML = "Unable to load";
       balanceEl.style.color = "hsl(var(--muted-foreground))";
     }
   } catch (error) {
     console.error("Error fetching balance:", error);
-    balanceEl.textContent = "Error";
+    balanceEl.innerHTML = "Error";
     balanceEl.style.color = "hsl(var(--destructive))";
   }
 }

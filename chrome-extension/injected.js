@@ -3,7 +3,6 @@
 (function () {
   'use strict';
 
-  console.log('💉 Cypherpunk injected script loaded');
 
   // Notify content script that injected script is ready
   window.postMessage({ type: 'CYPHERPUNK_INJECTED_READY' }, '*');
@@ -21,6 +20,34 @@
         type: 'CYPHERPUNK_PHANTOM_STATUS',
         data: { hasPhantom }
       }, '*');
+    }
+
+    if (type === 'CYPHERPUNK_CHECK_PHANTOM_CONNECTION') {
+      try {
+        const hasPhantom = !!(window.solana && window.solana.isPhantom);
+        if (!hasPhantom) {
+          window.postMessage({
+            type: 'CYPHERPUNK_PHANTOM_CONNECTION_STATUS',
+            data: { connected: false }
+          }, '*');
+          return;
+        }
+
+        // Silent connect only if previously trusted/connected
+        const res = await window.solana.connect({ onlyIfTrusted: true }).catch(() => null);
+        const connected = !!(res && res.publicKey);
+        const publicKey = connected ? res.publicKey.toString() : undefined;
+
+        window.postMessage({
+          type: 'CYPHERPUNK_PHANTOM_CONNECTION_STATUS',
+          data: { connected, publicKey }
+        }, '*');
+      } catch (error) {
+        window.postMessage({
+          type: 'CYPHERPUNK_PHANTOM_CONNECTION_STATUS',
+          data: { connected: false }
+        }, '*');
+      }
     }
 
     if (type === 'CYPHERPUNK_CONNECT_PHANTOM') {
@@ -51,10 +78,6 @@
         }
 
         const { transactionBase58, rpcUrl } = data;
-
-        console.log('Received transaction to sign');
-        console.log('Requesting signature from Phantom...');
-
         // Helper function to decode base58
         function decodeBase58(str) {
           const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -129,7 +152,6 @@
         // Decode transaction
         const transactionBytes = decodeBase58(transactionBase58);
         
-        console.log('Transaction decoded, requesting signature...');
 
         // Use Phantom's signTransaction to just sign (not send)
         const signedTx = await window.solana.signTransaction({
@@ -137,7 +159,6 @@
           serializeMessage: () => transactionBytes,
         });
 
-        console.log('Transaction signed, passing to content script...');
 
         // Send the signed transaction bytes to content script
         // Content script will forward to background script which can make RPC calls
@@ -164,12 +185,4 @@
       }
     }
   });
-
-  // Helper to encode u64 as little-endian
-  function encodeU64(value) {
-    const buffer = new ArrayBuffer(8);
-    const view = new DataView(buffer);
-    view.setBigUint64(0, BigInt(value), true);
-    return new Uint8Array(buffer);
-  }
 })();

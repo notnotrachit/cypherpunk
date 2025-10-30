@@ -1,99 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Rivo</title>
 
-<head>
-  <meta charset="UTF-8">
-  <title>Rivo</title>
+        <style>
+            @font-face {
+                font-family: "P22 Cusp Round";
+                src: url("fonts/p22-cusp-round.woff2") format("woff2");
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
+        </style>
+        <script src="./tailwind.js"></script>
+        <link rel="stylesheet" href="frankenui.css" />
+        <style type="text/tailwindcss">
+            @theme {
+                --font-logo: "P22 Cusp Round", ui-serif, serif;
+                --font-sans:
+                    "Hanken Grotesk", ui-sans-serif, sans-serif, system-ui;
+                --color-background: hsl(var(--background));
+                --color-foreground: hsl(var(--foreground));
+                --color-card: hsl(var(--card));
+                --color-card-foreground: hsl(var(--card-foreground));
+                --color-popover: hsl(var(--popover));
+                --color-popover-foreground: hsl(var(--popover-foreground));
+                --color-primary: hsl(var(--primary));
+                --color-primary-foreground: hsl(var(--primary-foreground));
+                --color-secondary: hsl(var(--secondary));
+                --color-secondary-foreground: hsl(var(--secondary-foreground));
+                --color-muted: hsl(var(--muted));
+                --color-muted-foreground: hsl(var(--muted-foreground));
+                --color-accent: hsl(var(--accent));
+                --color-accent-foreground: hsl(var(--accent-foreground));
+                --color-destructive: hsl(var(--destructive));
+                --color-destructive-foreground: hsl(
+                    var(--destructive-foreground)
+                );
+                --color-border: hsl(var(--border));
+                --color-input: hsl(var(--input));
+                --color-ring: hsl(var(--ring));
+            }
+        </style>
+        <style>
+            :root {
+                /* Override Franken UI default sans font (Geist) */
+                --uk-global-font-family-sans:
+                    "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+                --background: 240 26.8293% 8.0392%;
+                --foreground: 240 48.7179% 92.3529%;
+                --card: 240 27.7778% 14.1176%;
+                --card-foreground: 240 48.7179% 92.3529%;
+                --popover: 240 27.7778% 14.1176%;
+                --popover-foreground: 240 48.7179% 92.3529%;
+                --primary: 251.25 100% 78.0392%;
+                --primary-foreground: 240 26.8293% 8.0392%;
+                --secondary: 242.8571 32.8125% 25.098%;
+                --secondary-foreground: 241.9672 100% 88.0392%;
+                --muted: 240 33.3333% 20%;
+                --muted-foreground: 240 20.2532% 69.0196%;
+                --accent: 240 33.3333% 28.2353%;
+                --accent-foreground: 240 48.7179% 92.3529%;
+                --destructive: 350.1754 100% 66.4706%;
+                --destructive-foreground: 0 0% 100%;
+                --border: 240 26.1538% 25.4902%;
+                --input: 240 26.1538% 25.4902%;
+                --ring: 251.25 100% 78.0392%;
+            }
+        </style>
+    </head>
 
-  <style>
-    @font-face {
-      font-family: "P22 Cusp Round";
-      src: url("fonts/p22-cusp-round.woff2") format("woff2");
-      font-weight: normal;
-      font-style: normal;
-      font-display: swap;
-    }
+    <body class="bg-background text-foreground">
+        <div class="p-6 w-80">
+            <div class="text-center">
+                <img
+                    src="icons/logo.svg"
+                    alt="RIVO Logo"
+                    class="w-12 mx-auto mb-3"
+                />
+                <h1 class="font-logo text-2xl text-foreground">RIVO</h1>
+            </div>
 
-  </style>
-  <script src="./tailwind.js"></script>
-  <link rel="stylesheet" href="frankenui.css" />
-  <style type="text/tailwindcss">
-    @theme {
-        --font-logo: "P22 Cusp Round", ui-serif, serif;
-        --font-sans: "Hanken Grotesk", ui-sans-serif, sans-serif, system-ui;
-        --color-background: hsl(var(--background));
-        --color-foreground: hsl(var(--foreground));
-        --color-card: hsl(var(--card));
-        --color-card-foreground: hsl(var(--card-foreground));
-        --color-popover: hsl(var(--popover));
-        --color-popover-foreground: hsl(var(--popover-foreground));
-        --color-primary: hsl(var(--primary));
-        --color-primary-foreground: hsl(var(--primary-foreground));
-        --color-secondary: hsl(var(--secondary));
-        --color-secondary-foreground: hsl(var(--secondary-foreground));
-        --color-muted: hsl(var(--muted));
-        --color-muted-foreground: hsl(var(--muted-foreground));
-        --color-accent: hsl(var(--accent));
-        --color-accent-foreground: hsl(var(--accent-foreground));
-        --color-destructive: hsl(var(--destructive));
-        --color-destructive-foreground: hsl(var(--destructive-foreground));
-        --color-border: hsl(var(--border));
-        --color-input: hsl(var(--input));
-        --color-ring: hsl(var(--ring));
-      }
-    </style>
-  <style>
-    :root {
-      /* Override Franken UI default sans font (Geist) */
-      --uk-global-font-family-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
-      --background: 240 26.8293% 8.0392%;
-      --foreground: 240 48.7179% 92.3529%;
-      --card: 240 27.7778% 14.1176%;
-      --card-foreground: 240 48.7179% 92.3529%;
-      --popover: 240 27.7778% 14.1176%;
-      --popover-foreground: 240 48.7179% 92.3529%;
-      --primary: 251.25 100% 78.0392%;
-      --primary-foreground: 240 26.8293% 8.0392%;
-      --secondary: 242.8571 32.8125% 25.0980%;
-      --secondary-foreground: 241.9672 100% 88.0392%;
-      --muted: 240 33.3333% 20%;
-      --muted-foreground: 240 20.2532% 69.0196%;
-      --accent: 240 33.3333% 28.2353%;
-      --accent-foreground: 240 48.7179% 92.3529%;
-      --destructive: 350.1754 100% 66.4706%;
-      --destructive-foreground: 0 0% 100%;
-      --border: 240 26.1538% 25.4902%;
-      --input: 240 26.1538% 25.4902%;
-      --ring: 251.25 100% 78.0392%;
-    }
-  </style>
-</head>
+            <div id="disconnected-view" class="flex flex-col gap-3">
+                <p class="text-sm text-muted-foreground text-center">
+                    Connect your wallet to continue.
+                </p>
+                <a
+                    href="http://localhost:3000/dashboard"
+                    target="_blank"
+                    class="uk-btn uk-btn-primary w-full"
+                    >Connect Wallet</a
+                >
+            </div>
 
-<body class="bg-background text-foreground">
-  <div class="p-6 w-80">
-    <div class="text-center">
-      <img src="icons/logo.svg" alt="RIVO Logo" class="w-12 mx-auto mb-3">
-      <h1 class="font-logo text-2xl text-foreground">RIVO</h1>
-    </div>
+            <div id="connected-view" class="hidden mt-4">
+                <div class="text-center mb-4">
+                    <div class="text-xs text-muted-foreground">Wallet</div>
+                    <div
+                        id="wallet-address"
+                        class="text-sm font-medium text-foreground cursor-help"
+                    ></div>
+                </div>
 
-    <div id="disconnected-view" class="flex flex-col gap-3">
-      <p class="text-sm text-muted-foreground text-center">Connect your wallet to continue.</p>
-      <a href="http://localhost:3000/dashboard" target="_blank" class="uk-btn uk-btn-primary w-full">Connect Wallet</a>
-    </div>
+                <div
+                    class="bg-card rounded-lg p-4 mb-4 text-center border border-border"
+                >
+                    <div class="text-xs text-muted-foreground mb-1">
+                        USDC Balance
+                    </div>
+                    <div
+                        id="usdc-balance"
+                        class="text-2xl font-bold text-foreground font-mono"
+                    >
+                        <span class="text-muted-foreground">Loading...</span>
+                    </div>
+                </div>
 
-    <div id="connected-view" class="hidden mt-4">
-      <div class="text-center mb-3">
-        <div class="text-xs text-muted-foreground">Wallet</div>
-        <div id="wallet-address" class="text-sm font-medium text-foreground cursor-help"></div>
-      </div>
-      <div class="flex flex-col gap-2">
-        <a href="http://localhost:3000/dashboard" target="_blank" class="uk-btn uk-btn-default w-full">Open Dashboard</a>
-        <button class="uk-btn uk-btn-secondary w-full" id="refresh-btn">Refresh Status</button>
-      </div>
-    </div>
-  </div>
+                <div class="flex flex-col gap-2">
+                    <a
+                        href="http://localhost:3000/dashboard"
+                        target="_blank"
+                        class="uk-btn uk-btn-primary w-full"
+                        >Open Dashboard</a
+                    >
+                    <button
+                        class="uk-btn uk-btn-secondary w-full"
+                        id="refresh-btn"
+                    >
+                        Refresh Status
+                    </button>
+                </div>
+            </div>
+        </div>
 
-  <script src="popup.js"></script>
-</body>
-
+        <script src="popup.js"></script>
+    </body>
 </html>

@@ -343,6 +343,13 @@ function openPaymentModal(handle, walletAddress) {
       <div class="cypherpunk-modal-body">
         ${walletInfoHtml}
 
+        <div class="cypherpunk-balance-display" id="balance-display">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 16px;">
+            <span style="color: #a0a0a0; font-size: 13px;">Your Balance:</span>
+            <span id="user-balance" style="color: #14F195; font-weight: 600; font-size: 14px;">Loading...</span>
+          </div>
+        </div>
+
         <div class="cypherpunk-amount-input">
           <label for="usdc-amount">Amount (USDC)</label>
           <input
@@ -352,15 +359,6 @@ function openPaymentModal(handle, walletAddress) {
             min="0"
             step="0.01"
           />
-        </div>
-
-        <div class="cypherpunk-message-input">
-          <label for="payment-message">Message (optional)</label>
-          <textarea
-            id="payment-message"
-            placeholder="Add a message..."
-            rows="3"
-          ></textarea>
         </div>
 
         <div id="cypherpunk-status" class="cypherpunk-status"></div>
@@ -423,6 +421,34 @@ function openPaymentModal(handle, walletAddress) {
       modal.remove();
     }
   });
+
+  // Fetch and display user's USDC balance
+  fetchUserBalance();
+}
+
+// Fetch user's USDC balance
+async function fetchUserBalance() {
+  const balanceEl = document.getElementById("user-balance");
+  if (!balanceEl) return;
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: "getUserBalance",
+    });
+
+    if (response && response.success) {
+      const balance = response.balance || 0;
+      balanceEl.textContent = `${balance.toFixed(2)} USDC`;
+      balanceEl.style.color = "#14F195";
+    } else {
+      balanceEl.textContent = "Unable to load";
+      balanceEl.style.color = "#a0a0a0";
+    }
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    balanceEl.textContent = "Error";
+    balanceEl.style.color = "#a0a0a0";
+  }
 }
 
 // Track active transactions to prevent duplicates
@@ -431,12 +457,10 @@ let activeTransactionId = null;
 // Send USDC transaction
 async function sendUSDC(handle, walletAddress, isLinked) {
   const amountInput = document.getElementById("usdc-amount");
-  const messageInput = document.getElementById("payment-message");
   const statusDiv = document.getElementById("cypherpunk-status");
   const sendBtn = document.getElementById("send-usdc-btn");
 
   const amount = parseFloat(amountInput.value);
-  const message = messageInput.value;
 
   if (!amount || amount <= 0) {
     showStatus("Please enter a valid amount", "error");
@@ -576,7 +600,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
         recipientWallet: walletAddress || undefined,
         signature: txSignature,
         status: "confirmed",
-        memo: message || undefined,
       };
       storeTransaction(localTx);
 
@@ -610,7 +633,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
         recipientWallet: walletAddress || undefined,
         signature: txSignature,
         status: "confirmed",
-        memo: message || undefined,
       };
       storeTransaction(localTx);
 

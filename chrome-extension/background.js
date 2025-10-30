@@ -53,6 +53,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       .catch((error) => sendResponse({ error: error.message }));
     return true;
   }
+
+  if (request.action === "getUserBalance") {
+    getUserBalance()
+      .then(sendResponse)
+      .catch((error) => sendResponse({ error: error.message }));
+    return true;
+  }
 });
 
 // Check if a Twitter handle has a linked wallet
@@ -313,6 +320,40 @@ async function storeTransactionInExtension(transaction) {
     };
   } catch (error) {
     console.error("Error storing transaction via API:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+// Get user's USDC balance via API
+async function getUserBalance() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tokens/balance`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Failed to fetch balance" }));
+      throw new Error(errorData.error || "Failed to fetch balance");
+    }
+
+    const data = await response.json();
+    console.log("✅ Balance fetched:", data.balance);
+
+    return {
+      success: true,
+      balance: data.balance || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching balance:", error);
     return {
       success: false,
       error: error.message,

@@ -1,62 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rivo Browser Extension
 
-## Wallet Authentication (Phantom + Backend Verification)
+This is the browser extension for **Rivo** - a social payment platform on Solana. The extension adds a "Send USDC" button directly on Twitter profiles, enabling instant crypto payments using @usernames instead of wallet addresses.
 
-This project includes a Phantom login flow for Solana, with backend verification before granting access.
+> **Note:** For the complete Rivo ecosystem (mobile app, web dashboard, and smart contracts), see the [main repository](https://github.com/notnotrachit/Rivo) and [full documentation](./HACKATHON_DOCUMENTATION.md).
 
-- Server-side verification:
-  - GET /api/auth/nonce issues a one-time nonce and a canonical message to sign (an HttpOnly cookie named login_nonce is set).
-  - The wallet signs the message with Phantom.
-  - POST /api/auth/verify validates the signature, domain, and nonce, then sets a short-lived HttpOnly session cookie.
-  - Protected APIs (e.g., GET /api/protected) and pages are gated by middleware that checks the session.
+---
 
-- Client components:
-  - src/components/PhantomLogin.tsx handles connect -> fetch nonce/message -> sign -> verify.
+## 🎯 What It Does
 
-- Run locally:
-  1) Create a .env.local file in the project root and set:
-     AUTH_JWT_SECRET="a-long-random-string"
-  2) Install dependencies:
-     npm install
-  3) Start the dev server:
-     npm run dev
-  4) Open http://localhost:3000 and click “Sign in with Phantom”. After a successful login, try the “Protected” page or the “Check session” button.
+The extension injects a **"Send USDC"** button on every Twitter profile page. Click it, enter an amount, sign with your wallet, and send USDC to that @username - no wallet address needed.
 
-- Production notes:
-  - Cookies are marked secure when running under HTTPS.
-  - Rotate AUTH_JWT_SECRET if compromised, and consider longer session lifetimes only if appropriate.
+**Two Payment Modes:**
+- ✅ **Direct Transfer** - If user has linked their Twitter to a wallet, USDC sent instantly
+- ⏳ **Escrow** - If user hasn't linked yet, USDC held in escrow until they claim
 
-## Getting Started
+---
 
-First, run the development server:
+## 🚀 Quick Start
 
+### Installation
+
+**Chrome/Brave/Edge (Chromium-based browsers):**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Download latest release
+2. Open chrome://extensions
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select extension folder
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Usage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Visit any Twitter profile
+2. Click "Send USDC" button (appears next to Follow)
+3. Enter amount in the modal
+4. Connect Phantom wallet
+5. Sign transaction
+6. Done! ✨
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🏗️ Extension Architecture
 
-To learn more about Next.js, take a look at the following resources:
+```
+Twitter Page
+    ↓
+Content Script (injects button)
+    ↓
+Solana Program (on-chain execution)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Manifest V3** - Chrome/Firefox compatible
+- **TypeScript** - Type-safe code
+- **Solana Web3.js** - Blockchain interaction
+- **Phantom Adapter** - Wallet integration
 
-## Deploy on Vercel
+## 🎨 Extension UI
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Send Money Button
+- Injected next to Username
+- Matches Twitter's native design
+- Shows loading state during transaction
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Payment Modal
+- Centred overlay with backdrop
+- Pre-filled @username
+- Amount input with validation
+- Direct/Escrow status indicator
+---
+
+## 🔗 Links
+
+- **Main Repository**: [Rivo App](https://github.com/notnotrachit/Rivo)
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Fork, create a feature branch, and submit a PR.
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+**Built with ❤️ on Solana**

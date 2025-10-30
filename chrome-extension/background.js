@@ -1,6 +1,6 @@
 // Background service worker for Chrome extension
 
-const API_BASE_URL = "http://localhost:3000"; // Change to your production URL
+const API_BASE_URL = "https://rivo.rcht.dev"; // Change to your production URL
 
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

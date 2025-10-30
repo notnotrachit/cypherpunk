@@ -1,5 +1,6 @@
 // Content script for Twitter/X integration
 
+const API_BASE_URL = "https://rivo.rcht.dev";
 let processedProfiles = new Set();
 
 // Inject script into page context to access window.solana

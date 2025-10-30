@@ -6,6 +6,7 @@
   "permissions": ["storage", "activeTab", "cookies"],
   "host_permissions": [
     "http://localhost:3000/*",
+    "https://rivo.rcht.dev/*",
     "https://*.twitter.com/*",
     "https://*.x.com/*"
   ],

@@ -1,17 +1,12 @@
 // Content script for Twitter/X integration
 
-const API_BASE_URL = "http://localhost:3000";
 let processedProfiles = new Set();
-let injectedScriptReady = false;
-
-console.log("🚀 Cypherpunk extension loaded on:", window.location.href);
 
 // Inject script into page context to access window.solana
 function injectScript() {
   const script = document.createElement("script");
   script.src = chrome.runtime.getURL("injected.js");
   script.onload = function () {
-    console.log("💉 Injected script loaded");
     this.remove();
   };
   (document.head || document.documentElement).appendChild(script);
@@ -22,11 +17,6 @@ window.addEventListener("message", (event) => {
   if (event.source !== window) return;
 
   const { type, data } = event.data;
-
-  if (type === "CYPHERPUNK_INJECTED_READY") {
-    injectedScriptReady = true;
-    console.log("✅ Injected script ready");
-  }
 
   if (type === "CYPHERPUNK_PHANTOM_STATUS") {
     window.cypherpunkPhantomStatus = data;
@@ -49,8 +39,6 @@ window.addEventListener("message", (event) => {
 init();
 
 function init() {
-  console.log("🔧 Initializing extension...");
-
   // Inject script to access Phantom
   injectScript();
 
@@ -59,7 +47,6 @@ function init() {
 
   // Process current page after a delay
   setTimeout(() => {
-    console.log("⏰ Initial check...");
     processCurrentPage();
   }, 2000);
 }
@@ -73,7 +60,6 @@ function observeProfileChanges() {
 
     // Only process if URL changed (navigation happened)
     if (currentUrl !== lastUrl) {
-      console.log("🔄 URL changed from", lastUrl, "to", currentUrl);
       lastUrl = currentUrl;
 
       // Clear processed profiles on navigation
@@ -94,37 +80,23 @@ function observeProfileChanges() {
 
 // Process the current page
 async function processCurrentPage() {
-  console.log("📄 Processing page:", window.location.pathname);
-
   // Check if we're on a profile page
   const isProfilePage = window.location.pathname.match(/^\/[^\/]+$/);
-  console.log("🔍 Is profile page?", isProfilePage);
 
   if (isProfilePage) {
     const handle = extractTwitterHandle();
-    console.log("👤 Extracted handle:", handle);
 
     if (handle && !processedProfiles.has(handle)) {
-      console.log("✨ New profile detected:", handle);
       processedProfiles.add(handle);
       await checkAndAddSolanaButton(handle);
-    } else if (handle) {
-      console.log("⏭️ Profile already processed:", handle);
-    } else {
-      console.log("❌ Could not extract handle");
     }
-  } else {
-    console.log("⏭️ Not a profile page, skipping");
   }
 
   // Also check for profile cards in timeline
-  processTimelineProfiles();
 }
 
 // Extract Twitter handle from profile page
 function extractTwitterHandle() {
-  console.log("🔎 Extracting Twitter handle...");
-
   // First try: extract from URL (most reliable for profile pages)
   const match = window.location.pathname.match(/^\/([^\/]+)/);
   if (
@@ -135,7 +107,6 @@ function extractTwitterHandle() {
     match[1] !== "search"
   ) {
     const handle = "@" + match[1];
-    console.log("  ✅ Extracted from URL:", handle);
     return handle;
   }
 
@@ -147,9 +118,6 @@ function extractTwitterHandle() {
 
   for (const selector of selectors) {
     const elements = document.querySelectorAll(selector);
-    console.log(
-      `  Checking selector "${selector}": found ${elements.length} elements`,
-    );
 
     for (const el of elements) {
       const text = el.textContent;
@@ -159,30 +127,22 @@ function extractTwitterHandle() {
         !text.includes(" ") &&
         text.length > 1
       ) {
-        console.log("  ✅ Found handle in element:", text.trim());
         return text.trim();
       }
     }
   }
-
-  console.log("  ❌ Could not extract handle");
   return null;
 }
 
 // Check wallet and add Solana button
 async function checkAndAddSolanaButton(handle) {
-  console.log("🔍 Checking wallet for:", handle);
-
   try {
     // Check if wallet is linked
-    console.log("📡 Sending message to background script...");
     const result = await chrome.runtime.sendMessage({
       action: "checkWallet",
       handle: handle,
       platform: "twitter",
     });
-
-    console.log("📨 Received response:", result);
 
     if (result.error) {
       console.error("❌ Error checking wallet:", result.error);
@@ -192,14 +152,8 @@ async function checkAndAddSolanaButton(handle) {
     }
 
     if (result.found) {
-      console.log("✅ Wallet found!", result.wallet);
       addSolanaButton(handle, result.wallet);
     } else {
-      console.log(
-        "ℹ️ No wallet linked for",
-        handle,
-        "- will use send_to_unlinked",
-      );
       // Show button anyway, will use send_to_unlinked flow
       addSolanaButton(handle, null);
     }
@@ -212,16 +166,8 @@ async function checkAndAddSolanaButton(handle) {
 
 // Add Solana Pay button to profile
 function addSolanaButton(handle, walletAddress) {
-  console.log(
-    "🎨 Adding Solana button for:",
-    handle,
-    "Wallet:",
-    walletAddress || "Not linked",
-  );
-
   // Check if button already exists
   if (document.getElementById("cypherpunk-solana-btn")) {
-    console.log("⏭️ Button already exists, skipping");
     return;
   }
 
@@ -229,11 +175,8 @@ function addSolanaButton(handle, walletAddress) {
   const userNameContainer = document.querySelector('[data-testid="UserName"]');
 
   if (!userNameContainer) {
-    console.log("❌ Could not find UserName container");
     return;
   }
-
-  console.log("📍 UserName container found");
 
   // Find the row that contains the name and verified badge
   const nameRow = userNameContainer.querySelector(
@@ -241,7 +184,6 @@ function addSolanaButton(handle, walletAddress) {
   );
 
   if (!nameRow) {
-    console.log("❌ Could not find name row");
     return;
   }
 
@@ -283,15 +225,6 @@ function addSolanaButton(handle, walletAddress) {
 
   // Insert after the name/verified badge
   nameRow.appendChild(badgeWrapper);
-  console.log("✅ Solana badge added next to name");
-
-  console.log("✅ Solana button added for", handle);
-}
-
-// Process timeline profiles (hover cards, etc.)
-function processTimelineProfiles() {
-  // This can be extended to add indicators on timeline profiles
-  // For now, we focus on the main profile page
 }
 
 // Open payment modal
@@ -312,46 +245,39 @@ function openPaymentModal(handle, walletAddress) {
   modal.id = "cypherpunk-modal";
   modal.className = "cypherpunk-modal-overlay";
 
-  const walletInfoHtml = isLinked
-    ? `
-    <div class="cypherpunk-wallet-info">
-      <div class="cypherpunk-label">Wallet Address</div>
-      <div class="cypherpunk-wallet-address">
-        ${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}
-        <button class="cypherpunk-copy-btn" data-wallet="${walletAddress}">
-          📋
-        </button>
-      </div>
-    </div>
-  `
-    : `
-    <div class="cypherpunk-wallet-info">
-      <div class="cypherpunk-label">⚠️ Wallet Not Linked</div>
-      <div class="cypherpunk-wallet-address" style="font-size: 14px; line-height: 1.5;">
-        This user hasn't linked their wallet yet. Your USDC will be held in escrow and they can claim it when they link their wallet.
-      </div>
-    </div>
-  `;
-
   modal.innerHTML = `
     <div class="cypherpunk-modal">
       <div class="cypherpunk-modal-header">
-        <h2>${modalTitle}</h2>
-        <button class="cypherpunk-modal-close">×</button>
+        <h1 class="cypherpunk-brand">RIVO</h1>
+        <button class="cypherpunk-modal-close"></button>
       </div>
 
       <div class="cypherpunk-modal-body">
-        ${walletInfoHtml}
+        <h2 class="cypherpunk-modal-title">${modalTitle}</h2>
 
-        <div class="cypherpunk-balance-display" id="balance-display">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 16px;">
-            <span style="color: #a0a0a0; font-size: 13px;">Your Balance:</span>
-            <span id="user-balance" style="color: #14F195; font-weight: 600; font-size: 14px;">Loading...</span>
+        <div class="cypherpunk-balance-display">
+          <div class="cypherpunk-balance-label">
+            <img src="${chrome.runtime.getURL('svgs/wallet.svg')}" alt="Wallet" class="cypherpunk-icon">
+            Wallet Address
+          </div>
+          <div class="cypherpunk-wallet-address" title="${walletAddress || 'Not linked'}">
+            ${walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}` : 'Not linked'}
           </div>
         </div>
 
+        <div class="cypherpunk-balance-display">
+          <div class="cypherpunk-balance-label">
+            <img src="${chrome.runtime.getURL('svgs/coins.svg')}" alt="Balance" class="cypherpunk-icon">
+            Your Balance:
+          </div>
+          <div id="user-balance" class="cypherpunk-balance-amount">Loading...</div>
+        </div>
+
         <div class="cypherpunk-amount-input">
-          <label for="usdc-amount">Amount (USDC)</label>
+          <label for="usdc-amount">
+            <img src="${chrome.runtime.getURL('svgs/hash.svg')}" alt="Amount" class="cypherpunk-icon">
+            Amount (USDC)
+          </label>
           <input
             type="number"
             id="usdc-amount"
@@ -366,9 +292,11 @@ function openPaymentModal(handle, walletAddress) {
 
       <div class="cypherpunk-modal-footer">
         <button class="cypherpunk-btn-secondary" id="cancel-btn">
+          <img src="${chrome.runtime.getURL('svgs/x.svg')}" alt="Cancel" class="cypherpunk-icon">
           Cancel
         </button>
         <button class="cypherpunk-btn-primary" id="send-usdc-btn">
+          <img src="${chrome.runtime.getURL('svgs/send-horizontal.svg')}" alt="Send" class="cypherpunk-icon">
           ${isLinked ? "Send USDC" : "Send to Escrow"}
         </button>
       </div>
@@ -388,27 +316,6 @@ function openPaymentModal(handle, walletAddress) {
   cancelBtn.addEventListener("click", () => {
     modal.remove();
   });
-
-  // Add event listener for copy button (if wallet is linked)
-  if (isLinked) {
-    const copyBtn = modal.querySelector(".cypherpunk-copy-btn");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", () => {
-        const walletToCopy = copyBtn.getAttribute("data-wallet");
-        navigator.clipboard
-          .writeText(walletToCopy)
-          .then(() => {
-            copyBtn.textContent = "✓";
-            setTimeout(() => {
-              copyBtn.textContent = "📋";
-            }, 1000);
-          })
-          .catch((err) => {
-            console.error("Failed to copy wallet address:", err);
-          });
-      });
-    }
-  }
 
   // Add event listener for send button
   document.getElementById("send-usdc-btn").addEventListener("click", () => {
@@ -439,15 +346,15 @@ async function fetchUserBalance() {
     if (response && response.success) {
       const balance = response.balance || 0;
       balanceEl.textContent = `${balance.toFixed(2)} USDC`;
-      balanceEl.style.color = "#14F195";
+      balanceEl.style.color = "hsl(var(--foreground))";
     } else {
       balanceEl.textContent = "Unable to load";
-      balanceEl.style.color = "#a0a0a0";
+      balanceEl.style.color = "hsl(var(--muted-foreground))";
     }
   } catch (error) {
     console.error("Error fetching balance:", error);
     balanceEl.textContent = "Error";
-    balanceEl.style.color = "#a0a0a0";
+    balanceEl.style.color = "hsl(var(--destructive))";
   }
 }
 
@@ -469,7 +376,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
 
   // Prevent double-clicks and concurrent transactions
   if (sendBtn.disabled || activeTransactionId) {
-    console.log("Transaction already in progress, ignoring click");
     return;
   }
 
@@ -513,7 +419,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
     });
 
     const senderPublicKey = window.cypherpunkPhantomConnected.publicKey;
-    console.log("✅ Connected to Phantom:", senderPublicKey);
 
     showStatus("Building transaction...", "info");
     sendBtn.textContent = "Building...";
@@ -586,7 +491,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
       }
 
       const txSignature = sendResult.signature;
-      console.log("✅ Transaction sent:", txSignature);
 
       // Store transaction locally
       const localTx = {
@@ -613,7 +517,6 @@ async function sendUSDC(handle, walletAddress, isLinked) {
     } else if (signedResult.success) {
       // Old flow for backward compatibility
       const txSignature = signedResult.signature;
-      console.log("✅ Transaction confirmed:", txSignature);
 
       // Store transaction locally
       const localTx = {
@@ -664,8 +567,6 @@ function showStatus(message, type) {
  */
 async function storeTransaction(transaction) {
   try {
-    console.log("📤 Sending transaction to API:", transaction.id);
-
     // Send transaction to background script which will POST to API
     const response = await chrome.runtime.sendMessage({
       action: "storeTransaction",
@@ -673,7 +574,6 @@ async function storeTransaction(transaction) {
     });
 
     if (response && response.success) {
-      console.log("✅ Transaction stored successfully:", transaction.id);
     } else {
       console.warn("Failed to store transaction:", response?.error);
     }

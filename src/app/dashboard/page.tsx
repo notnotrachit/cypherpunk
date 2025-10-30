@@ -2,11 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifySessionJwt } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
-import SocialLinkingForm from "@/components/SocialLinkingForm";
+import DashboardClient from "@/components/DashboardClient";
 
-import { Wallet, Link, Coins } from "lucide-react";
-import ClaimPendingFunds from "@/components/ClaimPendingFunds";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -40,40 +38,7 @@ export default async function DashboardPage() {
             <span className="font-mono">{walletAddress}</span>
           </Badge>
         </header>
-
-        <div className="grid gap-6 md:grid-cols-2 items-stretch">
-          {/* Link Socials */}
-          <div>
-            <Card className="flex h-full flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-6 w-6" />
-                  Link Social Accounts
-                </CardTitle>
-                <CardDescription>Connect your socials to link your on-chain identity.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-end">
-                <SocialLinkingForm walletAddress={walletAddress} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Claim Funds */}
-          <div>
-            <Card className="flex h-full flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-6 w-6" />
-                  Claim Funds
-                </CardTitle>
-                <CardDescription>Claim any pending USDC sent to your handle before linking your wallet.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col justify-end">
-                <ClaimPendingFunds />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <DashboardClient walletAddress={walletAddress} />
       </main>
     </div>
   );

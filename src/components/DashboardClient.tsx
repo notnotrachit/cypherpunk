@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -137,6 +137,7 @@ export default function DashboardClient({
 }: {
   walletAddress?: string;
 }) {
+  const { data: session, status: sessionStatus } = useSession();
   const [wallet, setWallet] = useState<string | null>(walletFromServer ?? null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [twitterHandle, setTwitterHandle] = useState<string | null>(null);
@@ -162,6 +163,59 @@ export default function DashboardClient({
     () => totalPendingMicro / 1_000_000,
     [totalPendingMicro],
   );
+
+  // Handle Twitter OAuth callback - link account to blockchain (only on initial callback)
+  useEffect(() => {
+    async function linkTwitterAfterOAuth() {
+      // Only link if we just received the OAuth callback (session exists and Twitter handle doesn't match yet)
+      if (
+        sessionStatus === "authenticated" &&
+        session?.provider === "twitter" &&
+        session?.username &&
+        (!twitterHandle ||
+          !twitterHandle.toLowerCase().includes(session.username.toLowerCase()))
+      ) {
+        // Mark that we've attempted linking to avoid re-running this
+        const hasAttemptedLink = sessionStorage.getItem(
+          `twitter-linking-${session.username}`,
+        );
+        if (hasAttemptedLink) {
+          return; // Already attempted linking for this session
+        }
+
+        try {
+          console.log("🔗 Linking Twitter account after OAuth...");
+          sessionStorage.setItem(`twitter-linking-${session.username}`, "true");
+
+          const response = await fetch("/api/social/link-verified", {
+            method: "POST",
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("✅ Twitter account linked:", data);
+            toast.success(
+              `Twitter account @${session.username} linked successfully!`,
+            );
+            // Refresh data to show the new linked account
+            await refreshData();
+          } else {
+            const error = await response.json();
+            console.error("❌ Failed to link Twitter:", error);
+            // Don't show error toast if it's just "already linked"
+            if (!error.error?.includes("already")) {
+              toast.error(error.error || "Failed to link Twitter account");
+            }
+          }
+        } catch (e) {
+          console.error("Error linking Twitter after OAuth:", e);
+        }
+      }
+    }
+
+    linkTwitterAfterOAuth();
+  }, [sessionStatus, session?.username, twitterHandle]);
 
   useEffect(() => {
     let mounted = true;
@@ -415,6 +469,12 @@ export default function DashboardClient({
   async function onLinkTwitter() {
     try {
       setLinking(true);
+      // Clear the linking flag to allow the OAuth callback to trigger linking
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("twitter-linking-")) {
+          sessionStorage.removeItem(key);
+        }
+      });
       toast.info("Redirecting to Twitter…");
       await signIn("twitter", { callbackUrl: "/dashboard" });
     } catch (e: unknown) {
@@ -658,53 +718,62 @@ export default function DashboardClient({
               <CardDescription>Your linked identity and wallet</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center text-center gap-3">
-                <ProfileAvatar />
-                <div className="text-base font-semibold">
-                  {twitterHandle ?? "Not linked"}
+              {loading ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <div className="text-sm text-muted-foreground">
+                    Loading profile…
+                  </div>
                 </div>
-                <div className="mt-1 inline-flex items-center gap-2 text-xs text-muted-foreground">
-                  <Wallet className="h-3.5 w-3.5" />
-                  <span title={wallet ?? ""}>
-                    {wallet ? shortAddr(wallet) : ""}
-                  </span>
-                  {wallet ? (
-                    <button
-                      aria-label="Copy address"
-                      className="ml-1 inline-flex items-center gap-1 text-foreground/70 hover:text-foreground"
-                      onClick={async () => {
-                        if (!wallet) return;
-                        await navigator.clipboard.writeText(wallet);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1200);
-                      }}
-                    >
-                      {copied ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <Copy className="h-3 w-3" />
-                      )}
-                    </button>
-                  ) : null}
-                </div>
-                <div className="mt-3">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={onLinkTwitter}
-                    disabled={linking}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      {linking ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Twitter className="h-4 w-4" />
-                      )}
-                      {twitterHandle ? "Relink Twitter" : "Link Twitter"}
+              ) : (
+                <div className="flex flex-col items-center text-center gap-3">
+                  <ProfileAvatar />
+                  <div className="text-base font-semibold">
+                    {twitterHandle ?? "Not linked"}
+                  </div>
+                  <div className="mt-1 inline-flex items-center gap-2 text-xs text-muted-foreground">
+                    <Wallet className="h-3.5 w-3.5" />
+                    <span title={wallet ?? ""}>
+                      {wallet ? shortAddr(wallet) : ""}
                     </span>
-                  </Button>
+                    {wallet ? (
+                      <button
+                        aria-label="Copy address"
+                        className="ml-1 inline-flex items-center gap-1 text-foreground/70 hover:text-foreground"
+                        onClick={async () => {
+                          if (!wallet) return;
+                          await navigator.clipboard.writeText(wallet);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1200);
+                        }}
+                      >
+                        {copied ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={onLinkTwitter}
+                      disabled={linking}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        {linking ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Twitter className="h-4 w-4" />
+                        )}
+                        {twitterHandle ? "Relink Twitter" : "Link Twitter"}
+                      </span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>

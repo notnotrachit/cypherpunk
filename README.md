@@ -1,13 +1,28 @@
-# Rivo Browser Extension
+# Rivo - Complete Ecosystem
 
-This is the browser extension for **Rivo** - a social payment platform on Solana. The extension adds a "Send USDC" button directly on Twitter profiles, enabling instant crypto payments using @usernames instead of wallet addresses.
+<div align="center">
+  <img src="https://rivo.rcht.dev/logo.svg" alt="Rivo Logo" width="100" />
+</div>
 
-> **Note:** For the complete Rivo ecosystem (mobile app, web dashboard, and smart contracts), see the [main repository](https://github.com/notnotrachit/Rivo) and [full documentation](./HACKATHON_DOCUMENTATION.md).
+**Rivo** is a social payment platform on Solana that enables instant crypto payments using Twitter @usernames instead of wallet addresses. This repository contains the complete implementation:
+
+- 🌐 **Web Application** - Dashboard for wallet linking and transaction history
+- 🔌 **Browser Extension** - "Send Money" button on Twitter profiles
+- 📝 **Smart Contracts** - Solana programs for direct transfers and escrow
+
+> **Note:** For the mobile app, see the [main repository](https://github.com/notnotrachit/Rivo)
 ---
 
-## 🎯 What It Does
+## 🎯 Key Features
 
-The extension injects a **"Send USDC"** button on every Twitter profile page. Click it, enter an amount, sign with your wallet, and send USDC to that @username - no wallet address needed.
+### Browser Extension
+Injects a **"Send Money"** button on every Twitter profile page. Click it, enter an amount, sign with your wallet, and send USDC to that @username - no wallet address needed.
+
+### Web Dashboard
+Manage your Rivo account, link your Twitter to your wallet, view transaction history, and manage escrow payments.
+
+### Smart Contracts
+Solana programs that handle payment processing, wallet linking, and escrow management on-chain.
 
 **Two Payment Modes:**
 - ✅ **Direct Transfer** - If user has linked their Twitter to a wallet, USDC sent instantly
@@ -31,7 +46,7 @@ The extension injects a **"Send USDC"** button on every Twitter profile page. Cl
 ### Usage
 
 1. Visit any Twitter profile
-2. Click "Send USDC" button (appears next to Follow)
+2. Click "Send Money" button (appears next to Follow)
 3. Enter amount in the modal
 4. Connect Phantom wallet
 5. Sign transaction
@@ -41,13 +56,44 @@ The extension injects a **"Send USDC"** button on every Twitter profile page. Cl
 
 ## 🏗️ Extension Architecture
 
+### System Flow
+
 ```
-Twitter Page
+User on Twitter Profile
     ↓
-Content Script (injects button)
+Content Script detects page load
     ↓
-Solana Program (on-chain execution)
+Injects "Send Money" button
+    ↓
+User clicks button
+    ↓
+Payment Modal opens with @username pre-filled
+    ↓
+User enters amount & connects wallet
+    ↓
+Transaction signed via Phantom
+    ↓
+Solana Program processes payment
+    ↓
+Direct Transfer OR Escrow (based on wallet link status)
 ```
+
+### Component Architecture
+
+**Content Script** (`src/content/`)
+- Injects UI elements into Twitter DOM
+- Listens for button clicks
+- Communicates with background script
+
+**Background Script** (`src/background/`)
+- Manages wallet connections
+- Handles transaction signing
+- Stores user preferences
+
+**UI Components** (`src/ui/`)
+- Payment modal
+- Send button
+- Status indicators
 
 ### Tech Stack
 
@@ -55,6 +101,56 @@ Solana Program (on-chain execution)
 - **TypeScript** - Type-safe code
 - **Solana Web3.js** - Blockchain interaction
 - **Phantom Adapter** - Wallet integration
+- **React** - UI component framework (if applicable)
+
+## 📋 Smart Contract Details
+
+### Program Overview
+
+The Rivo Solana program handles two main payment flows:
+
+**1. Direct Transfer**
+- User has linked Twitter → Wallet
+- USDC transferred instantly to recipient's wallet
+- Transaction finalized on-chain immediately
+
+**2. Escrow Payment**
+- User hasn't linked Twitter → Wallet yet
+- USDC held in escrow account
+- Recipient can claim funds after linking wallet
+- Escrow released upon verification
+
+### Key Program Instructions
+
+- `initialize_user` - Register user with Twitter handle
+- `link_wallet` - Link Twitter account to Solana wallet
+- `send_direct` - Direct USDC transfer to linked wallet
+- `send_escrow` - Create escrow for unlinked users
+- `claim_escrow` - Recipient claims escrowed funds
+- `cancel_escrow` - Sender cancels escrow (after timeout)
+
+### Account Structure
+
+**User Account**
+- Twitter handle (string)
+- Linked wallet address (pubkey)
+- Account creation timestamp
+- Escrow balance
+
+**Escrow Account**
+- Sender address
+- Recipient Twitter handle
+- Amount (in lamports)
+- Creation timestamp
+- Status (Active/Claimed/Cancelled)
+
+### Security Features
+
+- **Signature Verification** - All transactions require sender signature
+- **Twitter Handle Validation** - Prevents impersonation
+- **Escrow Timeout** - Funds returned after 30 days if unclaimed
+- **Rate Limiting** - Prevents spam transactions
+- **Amount Validation** - Minimum and maximum transfer limits
 
 ## 🎨 Extension UI
 
@@ -62,29 +158,20 @@ Solana Program (on-chain execution)
 - Injected next to Username
 - Matches Twitter's native design
 - Shows loading state during transaction
+- Disabled for own profile
 
 ### Payment Modal
-- Centred overlay with backdrop
+- Centered overlay with backdrop
 - Pre-filled @username
 - Amount input with validation
 - Direct/Escrow status indicator
+- Real-time balance display
+- Transaction confirmation screen
 ---
 
 ## 🔗 Links
 
-- **Main Repository**: [Rivo App](https://github.com/notnotrachit/Rivo)
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Fork, create a feature branch, and submit a PR.
-
----
-
-## 📄 License
-
-MIT License
+- **Main Mobile App Repository**: [Rivo App](https://github.com/notnotrachit/Rivo)
 
 ---
 

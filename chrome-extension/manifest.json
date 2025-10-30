@@ -3,11 +3,7 @@
   "name": "Rivo",
   "version": "1.0.0",
   "description": "Send USDC to Twitter users via their linked Solana wallets",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "cookies"
-  ],
+  "permissions": ["storage", "activeTab", "cookies"],
   "host_permissions": [
     "http://localhost:3000/*",
     "https://*.twitter.com/*",
@@ -18,16 +14,9 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://twitter.com/*",
-        "https://x.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "css": [
-        "content.css"
-      ],
+      "matches": ["https://twitter.com/*", "https://x.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
       "run_at": "document_idle"
     }
   ],
@@ -46,15 +35,8 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "icons/*",
-        "modal.html",
-        "injected.js"
-      ],
-      "matches": [
-        "https://twitter.com/*",
-        "https://x.com/*"
-      ]
+      "resources": ["icons/*", "modal.html", "injected.js"],
+      "matches": ["https://twitter.com/*", "https://x.com/*"]
     }
   ]
 }

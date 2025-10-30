@@ -22,6 +22,7 @@ import {
   Coins,
   Twitter,
 } from "lucide-react";
+import { getStoredTransactions } from "@/lib/transaction-storage";
 
 type PendingClaim = {
   amount: number;
@@ -208,14 +209,80 @@ export default function DashboardClient({
             }
             if (th) {
               setHistoryLoading(true);
-              const histRes = await fetch(
-                `/api/tokens/payment-history?handle=${encodeURIComponent(th)}`,
-                { credentials: "include" },
-              );
-              if (histRes.ok) {
-                const hist: PaymentHistory = await histRes.json();
-                if (mounted) setPayments(hist.payments || []);
+              try {
+                const histRes = await fetch(
+                  `/api/tokens/payment-history?handle=${encodeURIComponent(th)}`,
+                  { credentials: "include" },
+                );
+
+                let allPayments: Payment[] = [];
+
+                if (histRes.ok) {
+                  const hist: PaymentHistory = await histRes.json();
+                  allPayments = hist.payments || [];
+                }
+
+                // Merge with locally stored transactions from the extension
+                const storedTransactions = await getStoredTransactions();
+                console.log(
+                  "📦 Stored transactions found:",
+                  storedTransactions.length,
+                );
+
+                const storedPayments = storedTransactions
+                  .filter((t) => t.type === "sent")
+                  .map((t) => ({
+                    index: -2, // Use -2 to identify as "sent" transactions
+                    sender: t.senderWallet,
+                    amount: t.amount,
+                    timestamp: Math.floor(t.timestamp / 1000), // Convert to seconds
+                    claimed: true, // Mark as "sent" (not pending claim)
+                    pda: t.id, // Use transaction ID as PDA for local txs
+                  }));
+
+                console.log(
+                  "📤 Stored payments for handle",
+                  th,
+                  ":",
+                  storedPayments.length,
+                );
+
+                // Combine: server payments first, then local transactions
+                allPayments = [...allPayments, ...storedPayments];
+
+                // Sort by timestamp (newest first)
+                allPayments.sort((a, b) => b.timestamp - a.timestamp);
+
+                console.log(
+                  "📊 Total payments to display:",
+                  allPayments.length,
+                );
+                if (mounted) setPayments(allPayments);
+              } catch (e) {
+                console.error("Error loading payment history:", e);
               }
+              setHistoryLoading(false);
+            } else {
+              // No Twitter handle linked, but still load local transactions if they exist
+              setHistoryLoading(true);
+              try {
+                const storedTransactions = await getStoredTransactions();
+                const localPayments = storedTransactions
+                  .map((t) => ({
+                    index: -1,
+                    sender: t.senderWallet,
+                    amount: t.amount,
+                    timestamp: Math.floor(t.timestamp / 1000),
+                    claimed: false,
+                    pda: t.id,
+                  }))
+                  .sort((a, b) => b.timestamp - a.timestamp);
+
+                if (mounted) setPayments(localPayments);
+              } catch (e) {
+                console.error("Error loading local transactions:", e);
+              }
+              setHistoryLoading(false);
             }
           }
         }
@@ -266,7 +333,24 @@ export default function DashboardClient({
         );
         if (histRes.ok) {
           const hist: PaymentHistory = await histRes.json();
-          setPayments(hist.payments || []);
+
+          // Merge with locally stored transactions from the extension
+          const storedTransactions = await getStoredTransactions();
+          const storedPayments = storedTransactions
+            .filter((t) => t.handle === twitterHandle && t.type === "sent")
+            .map((t) => ({
+              index: -1,
+              sender: t.senderWallet,
+              amount: t.amount,
+              timestamp: Math.floor(t.timestamp / 1000),
+              claimed: false,
+              pda: t.id,
+            }));
+
+          const allPayments = [...(hist.payments || []), ...storedPayments];
+          allPayments.sort((a, b) => b.timestamp - a.timestamp);
+
+          setPayments(allPayments);
         }
       }
     } catch (e: unknown) {
@@ -539,14 +623,21 @@ export default function DashboardClient({
                             {p.amount.toFixed(2)} USDC
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            from {shortAddr(p.sender)}
+                            {p.index === -2 ? "to" : "from"}{" "}
+                            {shortAddr(p.sender)}
                           </span>
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
                           <div>
                             {new Date(p.timestamp * 1000).toLocaleString()}
                           </div>
-                          <div>{p.claimed ? "Claimed" : "Unclaimed"}</div>
+                          <div>
+                            {p.index === -2
+                              ? "Sent"
+                              : p.claimed
+                                ? "Claimed"
+                                : "Unclaimed"}
+                          </div>
                         </div>
                       </div>
                     );

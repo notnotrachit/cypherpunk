@@ -68,9 +68,9 @@ export async function getStoredTransactions(
 /**
  * Add a new transaction to storage
  */
-export function addTransaction(transaction: LocalTransaction): void {
+export async function addTransaction(transaction: LocalTransaction): Promise<void> {
   try {
-    const transactions = getStoredTransactions();
+    const transactions = await getStoredTransactions();
     transactions.unshift(transaction); // Add to beginning (most recent first)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
   } catch (e) {
@@ -81,13 +81,13 @@ export function addTransaction(transaction: LocalTransaction): void {
 /**
  * Update a transaction's status (e.g., pending -> confirmed)
  */
-export function updateTransactionStatus(
+export async function updateTransactionStatus(
   txId: string,
   status: "pending" | "confirmed" | "failed",
   signature?: string,
-): void {
+): Promise<void> {
   try {
-    const transactions = getStoredTransactions();
+    const transactions = await getStoredTransactions();
     const tx = transactions.find((t) => t.id === txId);
     if (tx) {
       tx.status = status;
@@ -115,8 +115,8 @@ export function clearAllTransactions(): void {
 /**
  * Get transactions for a specific handle
  */
-export function getTransactionsForHandle(handle: string): LocalTransaction[] {
-  const transactions = getStoredTransactions();
+export async function getTransactionsForHandle(handle: string): Promise<LocalTransaction[]> {
+  const transactions = await getStoredTransactions();
   return transactions.filter((t) => t.handle === handle);
 }
 
